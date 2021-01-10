@@ -185,6 +185,7 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 /*
 문자 수신시 "\r\n\r\n*SMSALERT\r\n" str에 저장되면서 Recieve.
 명령을 보낼 때 마지막에 무조건 "\r\n" 보낼것
+20210110 Git Test
 */
 
 void CMFCserialportDlg::OnBnClickedBtConnect()
