@@ -55,4 +55,5 @@ public:
 	CEdit m_edit_revmsg;
 	afx_msg void OnEnChangeEditRevmsg();
 	afx_msg void OnBnClickedBtModifyAccount();
+	afx_msg void OnEnChangeEditSendData();
 };

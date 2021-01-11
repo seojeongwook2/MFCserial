@@ -7,6 +7,7 @@
 #include "MFCserialport.h"
 #include "MFCserialportDlg.h"
 #include "afxdialogex.h"
+#include<map>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -16,7 +17,7 @@
 
 // CMFCserialportDlg 대화 상자
 
-
+std::map<char, CString> mapping;
 
 CMFCserialportDlg::CMFCserialportDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCSERIALPORT_DIALOG, pParent)
@@ -54,6 +55,7 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BT_MESSAGE_SEND, &CMFCserialportDlg::OnBnClickedBtMessageSend)
 	ON_EN_CHANGE(IDC_EDIT_REVMSG, &CMFCserialportDlg::OnEnChangeEditRevmsg)
 	ON_BN_CLICKED(IDC_BT_MODIFY_ACCOUNT, &CMFCserialportDlg::OnBnClickedBtModifyAccount)
+	ON_EN_CHANGE(IDC_EDIT_SEND_DATA, &CMFCserialportDlg::OnEnChangeEditSendData)
 END_MESSAGE_MAP()
 
 
@@ -80,6 +82,94 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	m_combo_baudrate_list.AddString(_T("9600"));
 	m_combo_baudrate_list.AddString(_T("19200"));
 	m_combo_baudrate_list.AddString(_T("115200"));
+
+	mapping.insert(std::pair<char, CString>('@', "00"));
+	mapping.insert(std::pair<char, CString>('!', "21"));
+	mapping.insert(std::pair<char, CString>('\"', "22"));
+	mapping.insert(std::pair<char, CString>('#', "23"));
+
+	mapping.insert(std::pair<char, CString>('%', "25"));
+	mapping.insert(std::pair<char, CString>('&', "26"));
+	mapping.insert(std::pair<char, CString>('\'', "27"));
+	mapping.insert(std::pair<char, CString>('(', "28"));
+	mapping.insert(std::pair<char, CString>(')', "29"));
+	mapping.insert(std::pair<char, CString>('*', "2A"));
+	mapping.insert(std::pair<char, CString>('+', "2B"));
+	mapping.insert(std::pair<char, CString>(',', "2C"));
+	mapping.insert(std::pair<char, CString>('-', "2D"));
+	mapping.insert(std::pair<char, CString>('.', "2E"));
+	mapping.insert(std::pair<char, CString>('/', "2F"));
+
+	mapping.insert(std::pair<char, CString>('0', "30"));
+	mapping.insert(std::pair<char, CString>('1', "31"));
+	mapping.insert(std::pair<char, CString>('2', "32"));
+	mapping.insert(std::pair<char, CString>('3', "33"));
+	mapping.insert(std::pair<char, CString>('4', "34"));
+	mapping.insert(std::pair<char, CString>('5', "35"));
+	mapping.insert(std::pair<char, CString>('6', "36"));
+	mapping.insert(std::pair<char, CString>('7', "37"));
+	mapping.insert(std::pair<char, CString>('8', "38"));
+	mapping.insert(std::pair<char, CString>('9', "39"));
+	mapping.insert(std::pair<char, CString>(':', "3A"));
+	mapping.insert(std::pair<char, CString>(';', "3B"));
+	mapping.insert(std::pair<char, CString>('<', "3C"));
+	mapping.insert(std::pair<char, CString>('=', "3D"));
+	mapping.insert(std::pair<char, CString>('>', "3E"));
+	mapping.insert(std::pair<char, CString>('?', "3F"));
+
+	mapping.insert(std::pair<char, CString>('A', "41"));
+	mapping.insert(std::pair<char, CString>('B', "42"));
+	mapping.insert(std::pair<char, CString>('C', "43"));
+	mapping.insert(std::pair<char, CString>('D', "44"));
+	mapping.insert(std::pair<char, CString>('E', "45"));
+	mapping.insert(std::pair<char, CString>('F', "46"));
+	mapping.insert(std::pair<char, CString>('G', "47"));
+	mapping.insert(std::pair<char, CString>('H', "48"));
+	mapping.insert(std::pair<char, CString>('I', "49"));
+	mapping.insert(std::pair<char, CString>('J', "4A"));
+	mapping.insert(std::pair<char, CString>('K', "4B"));
+	mapping.insert(std::pair<char, CString>('L', "4C"));
+	mapping.insert(std::pair<char, CString>('M', "4D"));
+	mapping.insert(std::pair<char, CString>('N', "4E"));
+	mapping.insert(std::pair<char, CString>('O', "4F"));
+	mapping.insert(std::pair<char, CString>('P', "50"));
+	mapping.insert(std::pair<char, CString>('Q', "51"));
+	mapping.insert(std::pair<char, CString>('R', "52"));
+	mapping.insert(std::pair<char, CString>('S', "53"));
+	mapping.insert(std::pair<char, CString>('T', "54"));
+	mapping.insert(std::pair<char, CString>('U', "55"));
+	mapping.insert(std::pair<char, CString>('V', "56"));
+	mapping.insert(std::pair<char, CString>('W', "57"));
+	mapping.insert(std::pair<char, CString>('X', "58"));
+	mapping.insert(std::pair<char, CString>('Y', "59"));
+	mapping.insert(std::pair<char, CString>('Z', "5A"));
+
+	mapping.insert(std::pair<char, CString>('a', "61"));
+	mapping.insert(std::pair<char, CString>('b', "62"));
+	mapping.insert(std::pair<char, CString>('c', "63"));
+	mapping.insert(std::pair<char, CString>('d', "64"));
+	mapping.insert(std::pair<char, CString>('e', "65"));
+	mapping.insert(std::pair<char, CString>('f', "66"));
+	mapping.insert(std::pair<char, CString>('g', "67"));
+	mapping.insert(std::pair<char, CString>('h', "68"));
+	mapping.insert(std::pair<char, CString>('i', "69"));
+	mapping.insert(std::pair<char, CString>('j', "6A"));
+	mapping.insert(std::pair<char, CString>('k', "6B"));
+	mapping.insert(std::pair<char, CString>('l', "6C"));
+	mapping.insert(std::pair<char, CString>('m', "6D"));
+	mapping.insert(std::pair<char, CString>('n', "6E"));
+	mapping.insert(std::pair<char, CString>('o', "6F"));
+	mapping.insert(std::pair<char, CString>('p', "70"));
+	mapping.insert(std::pair<char, CString>('q', "71"));
+	mapping.insert(std::pair<char, CString>('r', "72"));
+	mapping.insert(std::pair<char, CString>('s', "73"));
+	mapping.insert(std::pair<char, CString>('t', "74"));
+	mapping.insert(std::pair<char, CString>('u', "75"));
+	mapping.insert(std::pair<char, CString>('v', "76"));
+	mapping.insert(std::pair<char, CString>('w', "77"));
+	mapping.insert(std::pair<char, CString>('x', "78"));
+	mapping.insert(std::pair<char, CString>('y', "79"));
+	mapping.insert(std::pair<char, CString>('z', "7A"));
 
 	comport_state = false;
 	GetDlgItem(IDC_BT_CONNECT)->SetWindowText(_T("OPEN"));
@@ -191,6 +281,13 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 20210110 Git Test
 */
 
+/*
+버튼 : ID / caption 변경
+
+Edit Control : ID설정
+변수 추가 m_edit_send_data -> Control --> Control ID 와 설정해준 ID가 일치해야함.
+*/
+
 void CMFCserialportDlg::OnBnClickedBtConnect()
 {
 	if (comport_state) {
@@ -257,7 +354,13 @@ void CMFCserialportDlg::OnBnClickedBtMessageSend()
 	final_send_string += ",";
 	final_send_string += "01224606372";
 	final_send_string += ",";
-	final_send_string += str_body;
+
+	CString encode_msg = "";
+	for (int i = 0; i < str_body.GetLength(); i++) {
+		encode_msg += mapping[str_body.GetAt(i)];
+	}
+
+	final_send_string += encode_msg;
 	final_send_string += "\r\n";
 	m_comm->Send(final_send_string, final_send_string.GetLength());
 }
@@ -280,4 +383,14 @@ void CMFCserialportDlg::OnBnClickedBtModifyAccount()
 	MFCmodifyaccount dlg;
 	// dlg.SetWindowTextA(_T("MY TITLE"));
 	dlg.DoModal();
+}
+
+void CMFCserialportDlg::OnEnChangeEditSendData()
+{
+	// TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
+	// CDialogEx::OnInitDialog() 함수를 재지정 
+	//하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
+	// 이 알림 메시지를 보내지 않습니다.
+
+	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }

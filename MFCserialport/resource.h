@@ -18,7 +18,6 @@
 #define IDC_EDIT1                       1010
 #define IDC_EDIT_REVMSG                 1010
 #define IDC_BT_MODIFY_ACCOUNT           1011
-#define IDC_LIST1                       1012
 
 // Next default values for new objects
 // 
