@@ -11,6 +11,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+#include "MFCmodifyaccount.h"
 
 
 // CMFCserialportDlg 대화 상자
@@ -52,6 +53,7 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BT_SEND, &CMFCserialportDlg::OnBnClickedBtSend)
 	ON_BN_CLICKED(IDC_BT_MESSAGE_SEND, &CMFCserialportDlg::OnBnClickedBtMessageSend)
 	ON_EN_CHANGE(IDC_EDIT_REVMSG, &CMFCserialportDlg::OnEnChangeEditRevmsg)
+	ON_BN_CLICKED(IDC_BT_MODIFY_ACCOUNT, &CMFCserialportDlg::OnBnClickedBtModifyAccount)
 END_MESSAGE_MAP()
 
 
@@ -85,6 +87,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	m_str_baudrate = _T("115200");
 	UpdateData(FALSE);
 
+	SetWindowText("문자 송/수신 프로그램");
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -268,4 +271,13 @@ void CMFCserialportDlg::OnEnChangeEditRevmsg()
 	// 이 알림 메시지를 보내지 않습니다.
 
 	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+
+
+void CMFCserialportDlg::OnBnClickedBtModifyAccount()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	MFCmodifyaccount dlg;
+	// dlg.SetWindowTextA(_T("MY TITLE"));
+	dlg.DoModal();
 }
