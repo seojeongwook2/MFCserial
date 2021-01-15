@@ -8,6 +8,7 @@
 #include "MFCserialportDlg.h"
 #include "afxdialogex.h"
 #include<map>
+#include<string>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -22,7 +23,6 @@ std::map<char, CString> mapping;
 CMFCserialportDlg::CMFCserialportDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCSERIALPORT_DIALOG, pParent)
 	, m_str_comport(_T(""))
-	, m_str_baudrate(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -32,8 +32,6 @@ void CMFCserialportDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_COMPORT, m_combo_comport_list);
 	DDX_CBString(pDX, IDC_COMBO_COMPORT, m_str_comport);
-	DDX_Control(pDX, IDC_COMBO_BAUDRATE, m_combo_baudrate_list);
-	DDX_CBString(pDX, IDC_COMBO_BAUDRATE, m_str_baudrate);
 	DDX_Control(pDX, IDC_EDIT_RCV_VIEW, m_edit_rcv_view);
 	DDX_Control(pDX, IDC_EDIT_SEND_DATA, m_edit_send_data);
 	DDX_Control(pDX, IDC_EDIT_PHONE_NUM, m_edit_phone_num);
@@ -49,7 +47,6 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_MESSAGE(WM_MYRECEIVE, &CMFCserialportDlg::OnReceive)
 	ON_BN_CLICKED(IDC_BT_CONNECT, &CMFCserialportDlg::OnBnClickedBtConnect)
 	ON_CBN_SELCHANGE(IDC_COMBO_COMPORT, &CMFCserialportDlg::OnCbnSelchangeComboComport)
-	ON_CBN_SELCHANGE(IDC_COMBO_BAUDRATE, &CMFCserialportDlg::OnCbnSelchangeComboBaudrate)
 	ON_BN_CLICKED(IDC_BT_CLEAR, &CMFCserialportDlg::OnBnClickedBtClear)
 	ON_BN_CLICKED(IDC_BT_SEND, &CMFCserialportDlg::OnBnClickedBtSend)
 	ON_BN_CLICKED(IDC_BT_MESSAGE_SEND, &CMFCserialportDlg::OnBnClickedBtMessageSend)
@@ -72,16 +69,16 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 
+	// ShowWindow(SW_SHOWMAXIMIZED);
+	buffer_complete = TRUE;
+	save_buffer = "";
+
 	m_combo_comport_list.AddString(_T("COM1"));
 	m_combo_comport_list.AddString(_T("COM2"));
 	m_combo_comport_list.AddString(_T("COM3"));
 	m_combo_comport_list.AddString(_T("COM4"));
 	m_combo_comport_list.AddString(_T("COM5"));
 	m_combo_comport_list.AddString(_T("COM6"));
-
-	m_combo_baudrate_list.AddString(_T("9600"));
-	m_combo_baudrate_list.AddString(_T("19200"));
-	m_combo_baudrate_list.AddString(_T("115200"));
 
 	mapping.insert(std::pair<char, CString>('@', "00"));
 	mapping.insert(std::pair<char, CString>('!', "21"));
@@ -174,12 +171,12 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	comport_state = false;
 	GetDlgItem(IDC_BT_CONNECT)->SetWindowText(_T("OPEN"));
 	m_str_comport = _T("COM2");
-	m_str_baudrate = _T("115200");
 	UpdateData(FALSE);
 
 	SetWindowText("문자 송/수신 프로그램");
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
+
 
 // 대화 상자에 최소화 단추를 추가할 경우 아이콘을 그리려면
 //  아래 코드가 필요합니다.  문서/뷰 모델을 사용하는 MFC 애플리케이션의 경우에는
@@ -226,52 +223,93 @@ LRESULT CMFCserialportDlg::OnThreadClosed(WPARAM length, LPARAM lpara) {
 LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 	CString str;
 	char data[20000];
-
 	if (m_comm) {
 		m_comm->Receive(data, length);
 		data[length] = _T('\0');
 		str += _T("\r\n");
+
 		for (int i = 0; i < length; i++) {
 			str += data[i];
 		}
+
+		if (str == "\r\n") {
+			return 0;
+		}
+
 		m_edit_rcv_view.ReplaceSel(str);
 		m_edit_rcv_view.LineScroll(m_edit_rcv_view.GetLineCount());
 
-		if (str == "\r\n\r\n*SMSALERT\r\n") {
+		if (buffer_complete == FALSE) {
+			save_buffer += str;
+			save_buffer.Remove('\r');
+			save_buffer.Remove('\n');
+
+			if (save_buffer.Find("SMSACK") != -1 || save_buffer.Find("SMSNACK") != -1 || save_buffer.Find("SMSMO") != -1) {
+				buffer_complete = TRUE;
+				save_buffer = "";
+			}
+
+			if (save_buffer.Find("OK") != -1) {
+				CString time, body, number;
+				AfxExtractSubString(time, save_buffer, 1, ',');
+				AfxExtractSubString(body, save_buffer, 4, ',');
+				AfxExtractSubString(number, save_buffer, 2, ',');
+
+				CString time_stamp = "";
+				time_stamp += time.Left(4);
+				time_stamp += "년 ";
+				time = time.Right(time.GetLength() - 4);
+				time_stamp += time.Left(2);
+				time_stamp += "월 ";
+				time = time.Right(time.GetLength() - 2);
+				time_stamp += time.Left(2);
+				time_stamp += "일 ";
+				time = time.Right(time.GetLength() - 2);
+				time_stamp += time.Left(2);
+				time_stamp += ":";
+				time = time.Right(time.GetLength() - 2);
+				time_stamp += time.Left(2);
+				time_stamp += ":";
+				time = time.Right(time.GetLength() - 2);
+				time_stamp += time.Left(2);
+
+				int K = body.Find("OK");
+				body = body.Left(K);
+
+				CString return_string = "";
+				return_string += body;
+				return_string += "           ";
+				return_string += number;
+				return_string += "           ";
+				return_string += time_stamp;
+				return_string += "\r\n";
+
+				save_buffer += "\r\n";
+				m_edit_revmsg.ReplaceSel(return_string);
+				// m_edit_revmsg.ReplaceSel(save_buffer);
+				m_edit_revmsg.LineScroll(m_edit_revmsg.GetLineCount());
+				buffer_complete = TRUE;
+				save_buffer = "";
+			}
+
+			return 0;
+		}
+
+		if (str.Find("*SMS") != -1) {
+			/*
+			** *SMSALERT가 들어옴. ERT가 잘려도 문제 없게 작성
+			** OK가 들어올 때까지 buffer를 열어두자
+			*/
+			buffer_complete = FALSE;
+			save_buffer = "";
+			save_buffer += str;
 			CString final_send_string = "AT*HREADMT=0\r\n";
 			m_comm->Send(final_send_string, final_send_string.GetLength());
 		}
-
-		if (str.SpanIncluding("HREADMT")) {
-			if (str == "\r\nAT*HREADMT=0\r") {
-				str = "";
-				return 0;
-			}
-
-			bool comma_start = false;
-			CString show_display= "";
-
-			for (int i = 0; i < length; i++) {
-				if (data[i] == '"') {
-					if (!comma_start) {
-						comma_start = true;
-					}
-					else {
-						break;
-					}
-				}
-				else {
-					if (comma_start) {
-						show_display += data[i];
-					}
-				}
-			}
-
-			GetDlgItem(IDC_EDIT_REVMSG)->SetWindowTextA(show_display);
-		}
-
+		
 		str = "";
 	}
+
 	return 0;
 }
 
@@ -301,7 +339,7 @@ void CMFCserialportDlg::OnBnClickedBtConnect()
 		}
 	}
 	else {
-		m_comm = new CMycomm(_T("\\\\.\\") + m_str_comport, m_str_baudrate, _T("None"), _T("8 Bit"), _T("1 Bit"));
+		m_comm = new CMycomm(_T("\\\\.\\") + m_str_comport, _T("115200"), _T("None"), _T("8 Bit"), _T("1 Bit"));
 		if (m_comm->Create(GetSafeHwnd()) != 0) {
 			AfxMessageBox(_T("COM 포트열림"));
 			comport_state = true;
@@ -319,13 +357,6 @@ void CMFCserialportDlg::OnCbnSelchangeComboComport()
 {
 	UpdateData();
 }
-
-
-void CMFCserialportDlg::OnCbnSelchangeComboBaudrate()
-{
-	UpdateData();
-}
-
 
 void CMFCserialportDlg::OnBnClickedBtClear()
 {
@@ -348,49 +379,36 @@ void CMFCserialportDlg::OnBnClickedBtMessageSend()
 	GetDlgItem(IDC_EDIT_PHONE_NUM)->GetWindowTextA(str_num);
 	CString str_body;
 	GetDlgItem(IDC_EDIT_BODY)->GetWindowTextA(str_body);
+	SendMessageFunction(str_num, str_body);
+}
 
-	CString final_send_string = "AT*SMSMO=";
-	final_send_string += str_num;
-	final_send_string += ",";
-	final_send_string += "01224606372";
-	final_send_string += ",";
 
+void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body) {
 	CString encode_msg = "";
-	for (int i = 0; i < str_body.GetLength(); i++) {
-		encode_msg += mapping[str_body.GetAt(i)];
+	for (int i = 0; i < body.GetLength(); i++) {
+		encode_msg += mapping[body.GetAt(i)];
 	}
 
+	CString final_send_string = "AT*SMSMO=";
+	final_send_string += target_number;
+	final_send_string += ",01224606372,";
 	final_send_string += encode_msg;
 	final_send_string += "\r\n";
 	m_comm->Send(final_send_string, final_send_string.GetLength());
 }
 
+void CMFCserialportDlg::OnBnClickedBtModifyAccount()
+{
+	MFCmodifyaccount dlg;
+	dlg.DoModal();
+}
 
 void CMFCserialportDlg::OnEnChangeEditRevmsg()
 {
-	// TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
-	// CDialogEx::OnInitDialog() 함수를 재지정 
-	//하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
-	// 이 알림 메시지를 보내지 않습니다.
 
-	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
-}
-
-
-void CMFCserialportDlg::OnBnClickedBtModifyAccount()
-{
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	MFCmodifyaccount dlg;
-	// dlg.SetWindowTextA(_T("MY TITLE"));
-	dlg.DoModal();
 }
 
 void CMFCserialportDlg::OnEnChangeEditSendData()
 {
-	// TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
-	// CDialogEx::OnInitDialog() 함수를 재지정 
-	//하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
-	// 이 알림 메시지를 보내지 않습니다.
 
-	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }

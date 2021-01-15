@@ -26,6 +26,10 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
 
+private:
+	BOOL buffer_complete;
+	CString save_buffer;
+	void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body);
 
 // 구현입니다.
 protected:
@@ -40,13 +44,10 @@ public:
 	BOOL comport_state;
 	CComboBox m_combo_comport_list;
 	CString m_str_comport;
-	CComboBox m_combo_baudrate_list;
-	CString m_str_baudrate;
 	CEdit m_edit_rcv_view;
 	CEdit m_edit_send_data;
 	afx_msg void OnBnClickedBtConnect();
 	afx_msg void OnCbnSelchangeComboComport();
-	afx_msg void OnCbnSelchangeComboBaudrate();
 	afx_msg void OnBnClickedBtClear();
 	afx_msg void OnBnClickedBtSend();
 	CEdit m_edit_phone_num;
