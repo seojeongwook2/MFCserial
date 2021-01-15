@@ -384,17 +384,24 @@ void CMFCserialportDlg::OnBnClickedBtMessageSend()
 
 
 void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body) {
-	CString encode_msg = "";
-	for (int i = 0; i < body.GetLength(); i++) {
-		encode_msg += mapping[body.GetAt(i)];
-	}
+	int Answer = AfxMessageBox("명령을 문자로 보내시겠습니까?", MB_OKCANCEL);
+	
+	if (Answer == IDOK) {
+		CString encode_msg = "";
+		for (int i = 0; i < body.GetLength(); i++) {
+			encode_msg += mapping[body.GetAt(i)];
+		}
 
-	CString final_send_string = "AT*SMSMO=";
-	final_send_string += target_number;
-	final_send_string += ",01224606372,";
-	final_send_string += encode_msg;
-	final_send_string += "\r\n";
-	m_comm->Send(final_send_string, final_send_string.GetLength());
+		CString final_send_string = "AT*SMSMO=";
+		final_send_string += target_number;
+		final_send_string += ",01224606372,";
+		final_send_string += encode_msg;
+		final_send_string += "\r\n";
+		m_comm->Send(final_send_string, final_send_string.GetLength());
+	}
+	else {
+
+	}
 }
 
 void CMFCserialportDlg::OnBnClickedBtModifyAccount()
