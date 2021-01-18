@@ -9,6 +9,7 @@
 #include "afxdialogex.h"
 #include<map>
 #include<string>
+#include<algorithm>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -21,6 +22,34 @@
 std::map<char, CString> mapping;
 CFont big_font;
 static HANDLE wait_handle;
+
+class CUSTOM_MESSAGE {
+private:
+	int index;
+	CString number;
+	CString time;
+	CString content;
+
+public:
+	CUSTOM_MESSAGE() : index(0), number(_T("")), time(_T("")), content(_T("")) { }
+	CUSTOM_MESSAGE(int in_index, CString in_number, CString in_time, CString in_content) :
+		index(in_index), number(in_number), time(in_time), content(in_content) { }
+
+	int getIndex() { return index; }
+	CString getNumber() { return number; }
+	CString getTime() { return time; }
+	CString getCotent() { return content; }
+	void setIndex(int in_index) { index = in_index; }
+	void setNumber(CString in_number) { number = in_number; }
+	void setTime(CString in_time) { time = in_time; }
+	void setContent(CString in_content) { content = in_content; }
+
+	bool operator<(CUSTOM_MESSAGE &target) {
+		return this->index < target.index;
+	}
+};
+
+CUSTOM_MESSAGE total_message_in_modem[277];
 
 CMFCserialportDlg::CMFCserialportDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCSERIALPORT_DIALOG, pParent)
@@ -74,6 +103,13 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	// ShowWindow(SW_SHOWMAXIMIZED);
 	buffer_complete = TRUE;
 	save_buffer = "";
+
+	for (int i = 0; i < 277; i++) {
+		total_message_in_modem[i].setContent(_T(""));
+		total_message_in_modem[i].setTime(_T(""));
+		total_message_in_modem[i].setNumber(_T(""));
+		total_message_in_modem[i].setIndex(0);
+	}
 
 	m_combo_comport_list.AddString(_T("COM1"));
 	m_combo_comport_list.AddString(_T("COM2"));
@@ -237,64 +273,52 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 			str += data[i];
 		}
 
-		if (str == "\r\n") {
-			return 0;
-		}
-
 		m_edit_rcv_view.ReplaceSel(str);
 		m_edit_rcv_view.LineScroll(m_edit_rcv_view.GetLineCount());
 
 		if (buffer_complete == FALSE) {
+			str.Remove('\r');
+			str.Remove('\n');
 			save_buffer += str;
 			save_buffer.Remove('\r');
 			save_buffer.Remove('\n');
 
-			if (save_buffer.Find("SMSACK") != -1 || save_buffer.Find("SMSNACK") != -1 || save_buffer.Find("SMSMO") != -1) {
-				buffer_complete = TRUE;
-				save_buffer = "";
-			}
-
 			if (save_buffer.Find("OK") != -1) {
-				CString time, body, number;
-				AfxExtractSubString(time, save_buffer, 1, ',');
-				AfxExtractSubString(body, save_buffer, 4, ',');
-				AfxExtractSubString(number, save_buffer, 2, ',');
 
-				CString time_stamp = "";
-				time_stamp += time.Left(4);
-				time_stamp += "년 ";
-				time = time.Right(time.GetLength() - 4);
-				time_stamp += time.Left(2);
-				time_stamp += "월 ";
-				time = time.Right(time.GetLength() - 2);
-				time_stamp += time.Left(2);
-				time_stamp += "일 ";
-				time = time.Right(time.GetLength() - 2);
-				time_stamp += time.Left(2);
-				time_stamp += ":";
-				time = time.Right(time.GetLength() - 2);
-				time_stamp += time.Left(2);
-				time_stamp += ":";
-				time = time.Right(time.GetLength() - 2);
-				time_stamp += time.Left(2);
+				for (int i = 0; i < 255; i++) {
+					CString temp;
+					AfxExtractSubString(temp, save_buffer, i + 1, ':');
 
-				int K = body.Find("OK");
-				body = body.Left(K);
+					temp = temp.Right(temp.GetLength() - 1);
+					if (temp.Find("*SKT*READTI") != -1) {
+						temp = temp.Left(temp.GetLength() - 11);
+					}
+					else {
+						temp = temp.Left(temp.GetLength() - 2);
+					}
 
-				CString return_string = "";
-				return_string += body;
-				return_string += "           ";
-				return_string += number;
-				return_string += "           ";
-				return_string += time_stamp;
-				return_string += "\r\n";
+					CString temp_index, temp_time, temp_number, temp_content;
+					AfxExtractSubString(temp_index, temp, 0, ',');
+					AfxExtractSubString(temp_time, temp, 1, ',');
+					AfxExtractSubString(temp_number, temp, 2, ',');
+					AfxExtractSubString(temp_content, temp, 4, ',');
 
-				save_buffer += "\r\n";
-				m_edit_revmsg.ReplaceSel(return_string);
-				// m_edit_revmsg.ReplaceSel(save_buffer);
-				m_edit_revmsg.LineScroll(m_edit_revmsg.GetLineCount());
-				buffer_complete = TRUE;
+					total_message_in_modem[i].setIndex(_ttoi(temp_index));
+					total_message_in_modem[i].setTime(temp_time);
+					total_message_in_modem[i].setContent(temp_content);
+					total_message_in_modem[i].setNumber(temp_number);
+
+
+					/*
+					temp += "\r\n";
+					m_edit_revmsg.ReplaceSel(temp);
+					m_edit_revmsg.LineScroll(m_edit_revmsg.GetLineCount());
+					*/
+				}
+
+				std::sort(total_message_in_modem, total_message_in_modem + 255);
 				save_buffer = "";
+				buffer_complete = TRUE;
 			}
 
 			return 0;
@@ -305,39 +329,12 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 			** *SMSALERT가 들어옴. ERT가 잘려도 문제 없게 작성
 			** OK가 들어올 때까지 buffer를 열어두자
 			*/
+
 			buffer_complete = FALSE; 
 			save_buffer = "";
-			save_buffer += str;
-			CString final_send_string = "AT*HREADMT=0\r\n";
-			m_comm->Send(final_send_string, final_send_string.GetLength());
-			Wait(2000);
-			CString final_send_string2 = "AT*HREADMT=1\r\n";
-			m_comm->Send(final_send_string2, final_send_string2.GetLength());
-			Wait(2000);
-			CString final_send_string3 = "AT*HREADMT=2\r\n";
-			m_comm->Send(final_send_string3, final_send_string3.GetLength());
-			Wait(2000);
-			CString final_send_string4 = "AT*HREADMT=3\r\n";
-			m_comm->Send(final_send_string4, final_send_string4.GetLength());
-			Wait(2000);
-
-			/* 
-			** about 10 secs for 4
-			** 600 secs for 240
-			** 760 secs for 256
-			*/
-
-			/*
-			for (int i = 0; i < 30; i++) {
-				CString final_send_string = "AT*HREADMT=";
-				CString numb;
-				numb.Format(_T("%d"), i);
-				final_send_string += numb;
-				final_send_string += "\r\n";
-				m_comm->Send(final_send_string, final_send_string.GetLength());
-				Wait(500);
-			}
-			*/
+			GetDlgItem(IDC_EDIT_RCV_VIEW)->SetWindowTextA(_T(" "));
+			CString command_send_string = "AT*SKT*READTI=4098\r\n";
+			m_comm->Send(command_send_string, command_send_string.GetLength());
 		}
 		
 		str = "";
@@ -375,6 +372,8 @@ Edit Control : ID설정
 변수 추가 m_edit_send_data -> Control --> Control ID 와 설정해준 ID가 일치해야함.
 */
 
+
+// comport button 
 void CMFCserialportDlg::OnBnClickedBtConnect()
 {
 	if (comport_state) {
@@ -409,19 +408,9 @@ void CMFCserialportDlg::OnCbnSelchangeComboComport()
 
 void CMFCserialportDlg::OnBnClickedBtClear()
 {
-	// GetDlgItem(IDC_EDIT_RCV_VIEW)->SetWindowTextA(_T(" "));
+	GetDlgItem(IDC_EDIT_RCV_VIEW)->SetWindowTextA(_T(" "));
 
 	/*
-	for (int i = 0; i < 255; i++) {
-		CString final_send_string = "AT*HREADMT=";
-		CString numb;
-		numb.Format(_T("%d"), i);
-		final_send_string += numb;
-		final_send_string += "\r\n";
-		m_comm->Send(final_send_string, final_send_string.GetLength());
-	}
-	*/
-
 	for (int i = 0; i < 10; i++) {
 		CString final_send_string = "AT*SMSMO=";
 		final_send_string += "01062817950";
@@ -432,6 +421,7 @@ void CMFCserialportDlg::OnBnClickedBtClear()
 		Wait(2000);
 		// 일괄전송용.
 	}
+	*/
 }
 
 
