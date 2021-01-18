@@ -29,6 +29,7 @@ public:
 private:
 	BOOL buffer_complete;
 	CString save_buffer;
+	void CMFCserialportDlg::Wait(DWORD dwMillisecond);
 	void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body);
 
 // 구현입니다.

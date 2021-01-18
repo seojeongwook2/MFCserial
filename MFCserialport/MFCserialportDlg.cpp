@@ -19,6 +19,8 @@
 // CMFCserialportDlg 대화 상자
 
 std::map<char, CString> mapping;
+CFont big_font;
+static HANDLE wait_handle;
 
 CMFCserialportDlg::CMFCserialportDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCSERIALPORT_DIALOG, pParent)
@@ -173,6 +175,9 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	m_str_comport = _T("COM2");
 	UpdateData(FALSE);
 
+	big_font.CreatePointFont(200, TEXT("굴림"));
+	GetDlgItem(IDC_EDIT_REVMSG)->SetFont(&big_font);
+
 	SetWindowText("문자 송/수신 프로그램");
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -295,22 +300,66 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 			return 0;
 		}
 
-		if (str.Find("*SMS") != -1) {
+		if (str.Find("*SMSAL") != -1) {
 			/*
 			** *SMSALERT가 들어옴. ERT가 잘려도 문제 없게 작성
 			** OK가 들어올 때까지 buffer를 열어두자
 			*/
-			buffer_complete = FALSE;
+			buffer_complete = FALSE; 
 			save_buffer = "";
 			save_buffer += str;
 			CString final_send_string = "AT*HREADMT=0\r\n";
 			m_comm->Send(final_send_string, final_send_string.GetLength());
+			Wait(2000);
+			CString final_send_string2 = "AT*HREADMT=1\r\n";
+			m_comm->Send(final_send_string2, final_send_string2.GetLength());
+			Wait(2000);
+			CString final_send_string3 = "AT*HREADMT=2\r\n";
+			m_comm->Send(final_send_string3, final_send_string3.GetLength());
+			Wait(2000);
+			CString final_send_string4 = "AT*HREADMT=3\r\n";
+			m_comm->Send(final_send_string4, final_send_string4.GetLength());
+			Wait(2000);
+
+			/* 
+			** about 10 secs for 4
+			** 600 secs for 240
+			** 760 secs for 256
+			*/
+
+			/*
+			for (int i = 0; i < 30; i++) {
+				CString final_send_string = "AT*HREADMT=";
+				CString numb;
+				numb.Format(_T("%d"), i);
+				final_send_string += numb;
+				final_send_string += "\r\n";
+				m_comm->Send(final_send_string, final_send_string.GetLength());
+				Wait(500);
+			}
+			*/
 		}
 		
 		str = "";
 	}
 
 	return 0;
+}
+
+void CMFCserialportDlg::Wait(DWORD dwMillisecond)
+{
+	MSG msg;
+	DWORD dwStart;
+	dwStart = GetTickCount();
+
+	while (GetTickCount() - dwStart < dwMillisecond)
+	{
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
 }
 
 /*
@@ -360,7 +409,29 @@ void CMFCserialportDlg::OnCbnSelchangeComboComport()
 
 void CMFCserialportDlg::OnBnClickedBtClear()
 {
-	GetDlgItem(IDC_EDIT_RCV_VIEW)->SetWindowTextA(_T(" "));
+	// GetDlgItem(IDC_EDIT_RCV_VIEW)->SetWindowTextA(_T(" "));
+
+	/*
+	for (int i = 0; i < 255; i++) {
+		CString final_send_string = "AT*HREADMT=";
+		CString numb;
+		numb.Format(_T("%d"), i);
+		final_send_string += numb;
+		final_send_string += "\r\n";
+		m_comm->Send(final_send_string, final_send_string.GetLength());
+	}
+	*/
+
+	for (int i = 0; i < 10; i++) {
+		CString final_send_string = "AT*SMSMO=";
+		final_send_string += "01062817950";
+		final_send_string += ",01224606372,";
+		final_send_string += "504D";
+		final_send_string += "\r\n";
+		m_comm->Send(final_send_string, final_send_string.GetLength()); 
+		Wait(2000);
+		// 일괄전송용.
+	}
 }
 
 
