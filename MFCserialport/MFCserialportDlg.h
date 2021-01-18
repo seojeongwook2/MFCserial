@@ -45,17 +45,7 @@ public:
 	BOOL comport_state;
 	CComboBox m_combo_comport_list;
 	CString m_str_comport;
-	CEdit m_edit_rcv_view;
-	CEdit m_edit_send_data;
 	afx_msg void OnBnClickedBtConnect();
 	afx_msg void OnCbnSelchangeComboComport();
-	afx_msg void OnBnClickedBtClear();
-	afx_msg void OnBnClickedBtSend();
-	CEdit m_edit_phone_num;
-	CEdit m_edit_body;
-	afx_msg void OnBnClickedBtMessageSend();
 	CEdit m_edit_revmsg;
-	afx_msg void OnEnChangeEditRevmsg();
-	afx_msg void OnBnClickedBtModifyAccount();
-	afx_msg void OnEnChangeEditSendData();
 };

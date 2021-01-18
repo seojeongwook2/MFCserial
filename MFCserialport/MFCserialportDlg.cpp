@@ -63,10 +63,6 @@ void CMFCserialportDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_COMPORT, m_combo_comport_list);
 	DDX_CBString(pDX, IDC_COMBO_COMPORT, m_str_comport);
-	DDX_Control(pDX, IDC_EDIT_RCV_VIEW, m_edit_rcv_view);
-	DDX_Control(pDX, IDC_EDIT_SEND_DATA, m_edit_send_data);
-	DDX_Control(pDX, IDC_EDIT_PHONE_NUM, m_edit_phone_num);
-	DDX_Control(pDX, IDC_EDIT_BODY, m_edit_body);
 	DDX_Control(pDX, IDC_EDIT_REVMSG, m_edit_revmsg);
 }
 
@@ -78,12 +74,6 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_MESSAGE(WM_MYRECEIVE, &CMFCserialportDlg::OnReceive)
 	ON_BN_CLICKED(IDC_BT_CONNECT, &CMFCserialportDlg::OnBnClickedBtConnect)
 	ON_CBN_SELCHANGE(IDC_COMBO_COMPORT, &CMFCserialportDlg::OnCbnSelchangeComboComport)
-	ON_BN_CLICKED(IDC_BT_CLEAR, &CMFCserialportDlg::OnBnClickedBtClear)
-	ON_BN_CLICKED(IDC_BT_SEND, &CMFCserialportDlg::OnBnClickedBtSend)
-	ON_BN_CLICKED(IDC_BT_MESSAGE_SEND, &CMFCserialportDlg::OnBnClickedBtMessageSend)
-	ON_EN_CHANGE(IDC_EDIT_REVMSG, &CMFCserialportDlg::OnEnChangeEditRevmsg)
-	ON_BN_CLICKED(IDC_BT_MODIFY_ACCOUNT, &CMFCserialportDlg::OnBnClickedBtModifyAccount)
-	ON_EN_CHANGE(IDC_EDIT_SEND_DATA, &CMFCserialportDlg::OnEnChangeEditSendData)
 END_MESSAGE_MAP()
 
 
@@ -273,9 +263,6 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 			str += data[i];
 		}
 
-		m_edit_rcv_view.ReplaceSel(str);
-		m_edit_rcv_view.LineScroll(m_edit_rcv_view.GetLineCount());
-
 		if (buffer_complete == FALSE) {
 			str.Remove('\r');
 			str.Remove('\n');
@@ -309,11 +296,9 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 					total_message_in_modem[i].setNumber(temp_number);
 
 
-					/*
 					temp += "\r\n";
 					m_edit_revmsg.ReplaceSel(temp);
 					m_edit_revmsg.LineScroll(m_edit_revmsg.GetLineCount());
-					*/
 				}
 
 				std::sort(total_message_in_modem, total_message_in_modem + 255);
@@ -332,7 +317,6 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 
 			buffer_complete = FALSE; 
 			save_buffer = "";
-			GetDlgItem(IDC_EDIT_RCV_VIEW)->SetWindowTextA(_T(" "));
 			CString command_send_string = "AT*SKT*READTI=4098\r\n";
 			m_comm->Send(command_send_string, command_send_string.GetLength());
 		}
@@ -383,7 +367,6 @@ void CMFCserialportDlg::OnBnClickedBtConnect()
 			AfxMessageBox(_T("COM 포트닫힘"));
 			comport_state = false;
 			GetDlgItem(IDC_BT_CONNECT)->SetWindowText(_T("OPEN"));
-			GetDlgItem(IDC_BT_SEND)->EnableWindow(false);
 		}
 	}
 	else {
@@ -392,7 +375,6 @@ void CMFCserialportDlg::OnBnClickedBtConnect()
 			AfxMessageBox(_T("COM 포트열림"));
 			comport_state = true;
 			GetDlgItem(IDC_BT_CONNECT)->SetWindowTextA(_T("CLOSE"));
-			GetDlgItem(IDC_BT_SEND)->EnableWindow(true);
 		}
 		else {
 			AfxMessageBox(_T("ERROR!"));
@@ -406,34 +388,7 @@ void CMFCserialportDlg::OnCbnSelchangeComboComport()
 	UpdateData();
 }
 
-void CMFCserialportDlg::OnBnClickedBtClear()
-{
-	GetDlgItem(IDC_EDIT_RCV_VIEW)->SetWindowTextA(_T(" "));
-
-	/*
-	for (int i = 0; i < 10; i++) {
-		CString final_send_string = "AT*SMSMO=";
-		final_send_string += "01062817950";
-		final_send_string += ",01224606372,";
-		final_send_string += "504D";
-		final_send_string += "\r\n";
-		m_comm->Send(final_send_string, final_send_string.GetLength()); 
-		Wait(2000);
-		// 일괄전송용.
-	}
-	*/
-}
-
-
-void CMFCserialportDlg::OnBnClickedBtSend()
-{
-	CString str;
-	GetDlgItem(IDC_EDIT_SEND_DATA)->GetWindowTextA(str);
-	str += "\r\n";
-	m_comm->Send(str, str.GetLength());
-}
-
-
+/* 문자보내는 코드
 void CMFCserialportDlg::OnBnClickedBtMessageSend()
 {
 	CString str_num;
@@ -465,18 +420,4 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 	}
 }
 
-void CMFCserialportDlg::OnBnClickedBtModifyAccount()
-{
-	MFCmodifyaccount dlg;
-	dlg.DoModal();
-}
-
-void CMFCserialportDlg::OnEnChangeEditRevmsg()
-{
-
-}
-
-void CMFCserialportDlg::OnEnChangeEditSendData()
-{
-
-}
+*/
