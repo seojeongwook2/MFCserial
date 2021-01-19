@@ -10,6 +10,11 @@
 // CMFCserialportDlg 대화 상자
 class CMFCserialportDlg : public CDialogEx
 {
+
+	CString manage_password = "1234";
+	CListCtrl mList;
+	CButton add_Button;
+	CEdit phone_EditCtrl, name_EditCtrl, password_EditCtrl;
 // 생성입니다.
 public:
 	CMFCserialportDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
@@ -40,7 +45,10 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+
 	DECLARE_MESSAGE_MAP()
+
+
 public:
 	BOOL comport_state;
 	CComboBox m_combo_comport_list;
@@ -48,4 +56,9 @@ public:
 	afx_msg void OnBnClickedBtConnect();
 	afx_msg void OnCbnSelchangeComboComport();
 	CEdit m_edit_revmsg;
+	afx_msg void OnEnChangeEditRevmsg();
+	//afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBnClickedButton1();
+	afx_msg void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult); //색상떄매 추가해봄
+
 };

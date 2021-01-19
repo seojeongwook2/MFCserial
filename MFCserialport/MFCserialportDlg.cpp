@@ -10,6 +10,10 @@
 #include<map>
 #include<string>
 #include<algorithm>
+#include "sqlite3.h"
+#include <assert.h>
+
+#pragma comment(lib, "sqlite3.lib")
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -22,6 +26,38 @@
 std::map<char, CString> mapping;
 CFont big_font;
 static HANDLE wait_handle;
+
+// SQLite는 UTF8을 사용하기 때문에 코드 변환이 필요합니다 by jang
+// 출처 - http://dolphin.ivyro.net/file/algorithm/SQLite/tutoria03.html
+int AnsiToUTF8(char* szSrc, char* strDest, int destSize)
+{
+	WCHAR 	szUnicode[255];
+	char 	szUTF8code[255];
+
+	int nUnicodeSize = MultiByteToWideChar(CP_ACP, 0, szSrc, (int)strlen(szSrc), szUnicode, sizeof(szUnicode));
+	int nUTF8codeSize = WideCharToMultiByte(CP_UTF8, 0, szUnicode, nUnicodeSize, szUTF8code, sizeof(szUTF8code), NULL, NULL);
+	assert(destSize > nUTF8codeSize);
+	memcpy(strDest, szUTF8code, nUTF8codeSize);
+	strDest[nUTF8codeSize] = 0;
+	return nUTF8codeSize;
+}
+
+int UTF8ToAnsi(char* szSrc, char* strDest, int destSize)
+{
+	WCHAR 	szUnicode[255];
+	char 	szAnsi[255];
+
+	int nSize = MultiByteToWideChar(CP_UTF8, 0, szSrc, -1, 0, 0);
+	int nUnicodeSize = MultiByteToWideChar(CP_UTF8, 0, szSrc, -1, szUnicode, nSize);
+	int nAnsiSize = WideCharToMultiByte(CP_ACP, 0, szUnicode, nUnicodeSize, szAnsi, sizeof(szAnsi), NULL, NULL);
+	assert(destSize > nAnsiSize);
+	memcpy(strDest, szAnsi, nAnsiSize);
+	strDest[nAnsiSize] = 0;
+	return nAnsiSize;
+}
+
+//여까지
+
 
 class CUSTOM_MESSAGE {
 private:
@@ -69,11 +105,13 @@ void CMFCserialportDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST1, OnCustomdrawList)
 	ON_MESSAGE(WM_MYCLOSE, &CMFCserialportDlg::OnThreadClosed)
 	ON_MESSAGE(WM_MYRECEIVE, &CMFCserialportDlg::OnReceive)
 	ON_BN_CLICKED(IDC_BT_CONNECT, &CMFCserialportDlg::OnBnClickedBtConnect)
 	ON_CBN_SELCHANGE(IDC_COMBO_COMPORT, &CMFCserialportDlg::OnCbnSelchangeComboComport)
+	ON_EN_CHANGE(IDC_EDIT_REVMSG, &CMFCserialportDlg::OnEnChangeEditRevmsg)
+	ON_BN_CLICKED(IDC_BUTTON1, &CMFCserialportDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 
@@ -205,6 +243,115 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	GetDlgItem(IDC_EDIT_REVMSG)->SetFont(&big_font);
 
 	SetWindowText("문자 송/수신 프로그램");
+
+	//윈도우 크기 설정 by jang
+	SIZE s;
+	ZeroMemory(&s, sizeof(SIZE));
+	s.cx = (LONG) ::GetSystemMetrics(SM_CXFULLSCREEN);
+	s.cy = (LONG) ::GetSystemMetrics(SM_CYFULLSCREEN);
+	SetWindowPos(&wndTop, 0, 0, s.cx, s.cy, SWP_SHOWWINDOW);
+
+	//init by jang
+	
+	mList.Attach(GetDlgItem(IDC_LIST1)->m_hWnd);
+	add_Button.Attach(GetDlgItem(IDC_BUTTON1)->m_hWnd);
+	name_EditCtrl.Attach(GetDlgItem(IDC_EDIT2)->m_hWnd);
+	phone_EditCtrl.Attach(GetDlgItem(IDC_EDIT3)->m_hWnd);
+	password_EditCtrl.Attach(GetDlgItem(IDC_EDIT4)->m_hWnd);
+
+	//init list by jang
+
+	mList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+	CRect rect;
+	//list 크기 얻어오기 by jang
+	mList.GetClientRect(&rect);
+
+
+	// 리스트 컨트롤에 컬럼 이름 입력 by jang
+	CString tmp;
+	tmp = "이름";
+	int width = rect.Width() / 4;
+	mList.InsertColumn(0, tmp, LVCFMT_LEFT , width);
+	tmp = "전화번호";
+	mList.InsertColumn(1, tmp, LVCFMT_LEFT, width);
+
+	tmp = "가동여부";
+	mList.InsertColumn(2, tmp, LVCFMT_LEFT, width);
+
+	tmp = "수위위험";
+	mList.InsertColumn(3, tmp, LVCFMT_LEFT,rect.Width() - 3 * width);
+
+
+	//db create by jang
+
+	// 데이터베이스 파일 생성 및 열기
+	sqlite3* db;
+	sqlite3_stmt* stmt;
+	char* errmsg = NULL;
+
+	int rc = sqlite3_open("test.db", &db);
+
+	if (rc != SQLITE_OK)
+	{
+		printf("Failed to open DB\n");
+		sqlite3_close(db);
+		exit(1);
+	}
+
+
+	char* sql;
+	sql = "CREATE TABLE IF NOT EXISTS DB("
+		"ID INTEGER PRIMARY        KEY     AUTOINCREMENT,"
+		"NAME          TEXT     NOT NULL,"
+		"TEL           TEXT     NOT NULL);";
+
+	rc = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
+
+	if (rc != SQLITE_OK)
+	{
+		printf("create table");
+		sqlite3_free(errmsg);
+		sqlite3_close(db);
+		exit(1);
+	}
+
+	// 테이블을 읽어와 리스트 컨트롤에 보여주기
+	sqlite3_prepare_v2(db, "select * from db", -1, &stmt, NULL);
+
+	while (sqlite3_step(stmt) != SQLITE_DONE) {
+		int i;
+		int num_cols = sqlite3_column_count(stmt);
+
+
+		char szAnsi[300];
+		UTF8ToAnsi((char*)sqlite3_column_text(stmt, 1), szAnsi, 300);
+		CString name(szAnsi);
+
+		UTF8ToAnsi((char*)sqlite3_column_text(stmt, 2), szAnsi, 300);
+		CString tel(szAnsi);
+
+		/*
+		UTF8ToAnsi((char*)sqlite3_column_text(stmt, 3), szAnsi, 300);
+		CString ison(szAnsi);
+
+		UTF8ToAnsi((char*)sqlite3_column_text(stmt, 4), szAnsi, 300);
+		CString danger(szAnsi);
+		*/
+
+
+		int nItem = mList.InsertItem(0, name);
+		mList.SetItemText(nItem, 1, tel);
+		mList.SetItemText(nItem, 2, "정상");
+		mList.SetItemText(nItem, 3, "정상");
+	}
+
+	sqlite3_finalize(stmt);
+
+	sqlite3_close(db);
+
+
+
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -421,3 +568,128 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 }
 
 */
+
+void CMFCserialportDlg::OnEnChangeEditRevmsg()
+{
+	// TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
+	// CDialogEx::OnInitDialog() 함수를 재지정 
+	//하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
+	// 이 알림 메시지를 보내지 않습니다.
+
+	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
+}
+
+
+
+
+//추가 버튼 클릭 리스너
+void CMFCserialportDlg::OnBnClickedButton1()
+{
+
+	CString name;
+	name_EditCtrl.GetWindowText(name);
+	CString phone;
+	phone_EditCtrl.GetWindowText(phone);
+	CString password;
+	password_EditCtrl.GetWindowText(password);
+
+	if (password.Compare(manage_password) != 0) {
+		CString tmp = "비밀번호가 틀립니다";
+		MessageBox(tmp);
+		return;
+	}
+
+	int nItem = mList.InsertItem(0, name);
+	mList.SetItemText(nItem, 1, phone);
+	mList.SetItemText(nItem, 2, "위험");
+	mList.SetItemText(nItem, 3, "정상");
+	
+
+	// 에디터 박스에 입력된 데이터를 리스트컨트롤에 입력
+
+	sqlite3* db;
+	int rc = sqlite3_open("test.db", &db);
+
+	if (rc != SQLITE_OK)
+	{
+		printf("Failed to open DB\n");
+		sqlite3_close(db);
+		exit(1);
+	}
+
+	char* s_name;
+
+	CStringW strw(name);
+	LPCWSTR ptr = strw;
+
+	int sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+	s_name = new char[sLen + 1];
+	WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_name, sLen, NULL, NULL);
+
+	char szName[100];
+	AnsiToUTF8(s_name, szName, 100);
+
+	delete[]s_name;
+
+
+
+
+	char* s_tel;
+	CStringW strw2(phone);
+	ptr = strw2;
+	sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+	s_tel = new char[sLen + 1];
+	WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_tel, sLen, NULL, NULL);
+
+	char szTel[100];
+	AnsiToUTF8(s_tel, szTel, 100);
+
+	delete[]s_tel;
+
+
+
+	char* errmsg = NULL;
+	char sql[255] = { 0 };
+	sprintf(sql, "insert into db(name, tel) values('%s','%s');", szName, szTel);
+
+	if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+	{
+		printf("insert");
+	}
+
+	sqlite3_close(db);
+
+}
+
+
+void CMFCserialportDlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	*pResult = 0;
+
+	NMLVCUSTOMDRAW* pLVCD = (NMLVCUSTOMDRAW*)pNMHDR;
+
+	switch (pLVCD->nmcd.dwDrawStage){
+		case CDDS_PREPAINT:{
+			*pResult = CDRF_NOTIFYITEMDRAW;
+		}
+		break;
+		case CDDS_ITEMPREPAINT:	{
+			int iRow = pLVCD->nmcd.dwItemSpec; // 행을 알수있다.
+			CString isOn = mList.GetItemText(iRow, 2);
+			CString isDanger = mList.GetItemText(iRow, 2);
+			if (isOn.Compare("위험") == 0 || isDanger.Compare("위험") ==0) {
+				pLVCD->clrText = RGB(255, 0, 0); // 텍스트 색 지정
+				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+			}
+			*pResult = CDRF_DODEFAULT;
+		}
+		break;
+		default:
+		{
+			*pResult = CDRF_DODEFAULT;
+		}
+		break;
+	}
+
+}
