@@ -112,6 +112,14 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_CBN_SELCHANGE(IDC_COMBO_COMPORT, &CMFCserialportDlg::OnCbnSelchangeComboComport)
 	ON_EN_CHANGE(IDC_EDIT_REVMSG, &CMFCserialportDlg::OnEnChangeEditRevmsg)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMFCserialportDlg::OnBnClickedButton1)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CMFCserialportDlg::OnDblclkList1)
+	ON_BN_CLICKED(IDC_BUTTON3, &CMFCserialportDlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BUTTON6, &CMFCserialportDlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_BUTTON4, &CMFCserialportDlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON5, &CMFCserialportDlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON7, &CMFCserialportDlg::OnBnClickedButton7)
+	ON_BN_CLICKED(IDC_BUTTON2, &CMFCserialportDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON8, &CMFCserialportDlg::OnBnClickedButton8)
 END_MESSAGE_MAP()
 
 
@@ -145,6 +153,8 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	m_combo_comport_list.AddString(_T("COM4"));
 	m_combo_comport_list.AddString(_T("COM5"));
 	m_combo_comport_list.AddString(_T("COM6"));
+	m_combo_comport_list.AddString(_T("COM15"));
+	m_combo_comport_list.AddString(_T("COM18"));
 
 	mapping.insert(std::pair<char, CString>('@', "00"));
 	mapping.insert(std::pair<char, CString>('!', "21"));
@@ -258,6 +268,15 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	name_EditCtrl.Attach(GetDlgItem(IDC_EDIT2)->m_hWnd);
 	phone_EditCtrl.Attach(GetDlgItem(IDC_EDIT3)->m_hWnd);
 	password_EditCtrl.Attach(GetDlgItem(IDC_EDIT4)->m_hWnd);
+	sendName_EditCtrl.Attach(GetDlgItem(IDC_EDIT5)->m_hWnd);
+	sendPhone_EditCtrl.Attach(GetDlgItem(IDC_EDIT6)->m_hWnd);
+	PUMP1.Attach(GetDlgItem(IDC_BUTTON3)->m_hWnd);
+	PUMP2.Attach(GetDlgItem(IDC_BUTTON4)->m_hWnd);
+	PUMP3.Attach(GetDlgItem(IDC_BUTTON5)->m_hWnd);
+	STOP.Attach(GetDlgItem(IDC_BUTTON6)->m_hWnd);
+	RESET.Attach(GetDlgItem(IDC_BUTTON7)->m_hWnd);
+	sendMessage_EditCtrl.Attach(GetDlgItem(IDC_EDIT7)->m_hWnd);
+
 
 	//init list by jang
 
@@ -342,13 +361,14 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 		int nItem = mList.InsertItem(0, name);
 		mList.SetItemText(nItem, 1, tel);
-		mList.SetItemText(nItem, 2, "정상");
+		mList.SetItemText(nItem, 2, "중지");
 		mList.SetItemText(nItem, 3, "정상");
 	}
 
 	sqlite3_finalize(stmt);
 
 	sqlite3_close(db);
+
 
 
 
@@ -418,7 +438,7 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 			save_buffer.Remove('\n');
 
 			if (save_buffer.Find("OK") != -1) {
-
+				m_edit_revmsg.SetWindowTextA(" ");
 				for (int i = 0; i < 255; i++) {
 					CString temp;
 					AfxExtractSubString(temp, save_buffer, i + 1, ':');
@@ -449,6 +469,100 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 				}
 
 				std::sort(total_message_in_modem, total_message_in_modem + 255);
+
+			//	total_message_in_modem[1].getNumber();
+
+
+				/*
+				message 내용 에서 total_message_in_modem[i].getContent().Find("-ON-") != -1    ---> 펌프가동상태
+				Find("-OFF") ----> 펌프 중단상태
+				저수위 위험 --> "LEVEL"ALARM""
+				저수위 정상 --> "LEVEL"NORMAL""
+				*/
+
+				for (int i = 0; i < mList.GetItemCount(); i++) {
+					CString phone = mList.GetItemText(i, 1);
+					CString name = mList.GetItemText(i, 0);
+					BOOL level_status = TRUE;
+					// 정상 : TRUE 비정상 : FLASE
+					BOOL pump_status = FALSE;
+					// 중지 : FALSE 가동 : TRUE
+
+					// 물 수위
+					for (int j = 0; j < 255; j++) {
+						CString compare_number = total_message_in_modem[j].getNumber();
+
+						if (phone.Compare(compare_number) == 0) {
+							CString tmp_content = total_message_in_modem[j].getCotent();
+
+							if (tmp_content.Find("LEVEL\"ALARM\"") != -1) {
+								level_status = FALSE;
+								break;
+							}
+							else if (tmp_content.Find("LEVEL\"NORMAL\"") != -1) {
+								level_status = TRUE;
+								break;
+							}
+						}
+					}
+
+					// 펌프 가동 상태
+					for (int j = 0; j < 255; j++) {
+						CString compare_number = total_message_in_modem[j].getNumber();
+
+						if (phone.Compare(compare_number) == 0) {
+							CString tmp_content = total_message_in_modem[j].getCotent();
+
+							if (tmp_content.Find("-ON-") != -1) {
+								pump_status = TRUE;
+								break;
+							}
+							else if (tmp_content.Find("-OFF-") != -1) {
+								pump_status = FALSE;
+								break;
+							}
+						}
+					}
+
+					/*
+					
+	mList.DeleteItem(idx);
+	CString strTmp;
+	strTmp = "새로생김";
+	int nItem = mList.InsertItem(idx, strTmp);
+	mList.SetItemText(nItem, 1, value);
+					
+					*/
+
+					mList.DeleteItem(i);
+					int nItem = mList.InsertItem(i, name);
+					mList.SetItemText(nItem, 1, phone);
+					if (!pump_status) {
+						if (level_status) {
+							// 펌프 정상, 레벨 정상
+							mList.SetItemText(nItem, 2, "중지");
+							mList.SetItemText(nItem, 3, "정상");
+						}
+						else {
+							mList.SetItemText(nItem, 2, "중지");
+							mList.SetItemText(nItem, 3, "위험");
+						}
+
+					}
+					else {
+						if (level_status) {
+							mList.SetItemText(nItem, 2, "가동");
+							mList.SetItemText(nItem, 3, "정상");
+						}
+						else {
+							mList.SetItemText(nItem, 2, "가동");
+							mList.SetItemText(nItem, 3, "위험");
+						}
+					}
+				}
+
+				
+
 				save_buffer = "";
 				buffer_complete = TRUE;
 			}
@@ -522,6 +636,9 @@ void CMFCserialportDlg::OnBnClickedBtConnect()
 			AfxMessageBox(_T("COM 포트열림"));
 			comport_state = true;
 			GetDlgItem(IDC_BT_CONNECT)->SetWindowTextA(_T("CLOSE"));
+
+			CString final_send_string = "AT*SMSMO=01224606372,01224606372,50\r\n";
+			m_comm->Send(final_send_string, final_send_string.GetLength());
 		}
 		else {
 			AfxMessageBox(_T("ERROR!"));
@@ -544,7 +661,7 @@ void CMFCserialportDlg::OnBnClickedBtMessageSend()
 	GetDlgItem(IDC_EDIT_BODY)->GetWindowTextA(str_body);
 	SendMessageFunction(str_num, str_body);
 }
-
+*/
 
 void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body) {
 	int Answer = AfxMessageBox("명령을 문자로 보내시겠습니까?", MB_OKCANCEL);
@@ -567,7 +684,7 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 	}
 }
 
-*/
+
 
 void CMFCserialportDlg::OnEnChangeEditRevmsg()
 {
@@ -601,7 +718,7 @@ void CMFCserialportDlg::OnBnClickedButton1()
 
 	int nItem = mList.InsertItem(0, name);
 	mList.SetItemText(nItem, 1, phone);
-	mList.SetItemText(nItem, 2, "위험");
+	mList.SetItemText(nItem, 2, "중지");
 	mList.SetItemText(nItem, 3, "정상");
 	
 
@@ -677,12 +794,26 @@ void CMFCserialportDlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 		case CDDS_ITEMPREPAINT:	{
 			int iRow = pLVCD->nmcd.dwItemSpec; // 행을 알수있다.
 			CString isOn = mList.GetItemText(iRow, 2);
-			CString isDanger = mList.GetItemText(iRow, 2);
-			if (isOn.Compare("위험") == 0 || isDanger.Compare("위험") ==0) {
+			CString isDanger = mList.GetItemText(iRow, 3);
+			if (isOn.Compare("가동") == 0 && isDanger.Compare("위험") == 0) {
 				pLVCD->clrText = RGB(255, 0, 0); // 텍스트 색 지정
 				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
 			}
+			else if (isOn.Compare("가동") == 0 && isDanger.Compare("위험") != 0) {
+				pLVCD->clrText = RGB(0, 0, 255); // 텍스트 색 지정
+				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+			}
+			else if (isOn.Compare("가동") != 0 && isDanger.Compare("위험") == 0) {
+				pLVCD->clrText = RGB(255, 0, 255); // 텍스트 색 지정
+				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+			}
+			else {
+				pLVCD->clrText = RGB(0, 0, 0); // 텍스트 색 지정
+				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+
+			}
 			*pResult = CDRF_DODEFAULT;
+
 		}
 		break;
 		default:
@@ -692,4 +823,145 @@ void CMFCserialportDlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 		break;
 	}
 
+}
+
+void CMFCserialportDlg::OnDblclkList1(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+
+	//안쪽 지역 클릭시 by jang
+	if (pNMItemActivate->iItem != -1) {
+		idx = pNMItemActivate->iItem;
+		CString strSelectdName = mList.GetItemText(pNMItemActivate->iItem, 0);
+		CString strSelectedPhone = mList.GetItemText(pNMItemActivate->iItem, 1);
+
+		sendPhone_EditCtrl.SetWindowTextA(strSelectedPhone);
+		sendName_EditCtrl.SetWindowTextA(strSelectdName);
+
+		m_edit_revmsg.SetWindowTextA("");
+
+		for (int i = 254; i >= 0; i--) {
+			if (total_message_in_modem[i].getNumber().Compare(strSelectedPhone) == 0) {
+				CString display_string = "";
+				display_string += total_message_in_modem[i].getCotent();
+				display_string += "            ";
+				display_string += total_message_in_modem[i].getTime();
+				display_string += "\r\n";
+
+				m_edit_revmsg.ReplaceSel(display_string);
+				m_edit_revmsg.LineScroll(m_edit_revmsg.GetLineCount());
+			}
+		}
+	}
+	
+	*pResult = 0;
+}
+
+//PUMP1 클릭
+void CMFCserialportDlg::OnBnClickedButton3()
+{
+	CString tmp = "PUMP1";
+	sendMessage_EditCtrl.SetWindowTextA(tmp);
+}
+
+
+
+void CMFCserialportDlg::OnBnClickedButton4()
+{
+	CString tmp = "PUMP2";
+	sendMessage_EditCtrl.SetWindowTextA(tmp);
+}
+
+void CMFCserialportDlg::OnBnClickedButton5()
+{
+	CString tmp = "PUMP3";
+	sendMessage_EditCtrl.SetWindowTextA(tmp);
+}
+
+
+void CMFCserialportDlg::OnBnClickedButton6()
+{
+	CString tmp = "0";
+	sendMessage_EditCtrl.SetWindowTextA(tmp);
+}
+
+
+
+
+void CMFCserialportDlg::OnBnClickedButton7()
+{
+	CString tmp = "7";
+	sendMessage_EditCtrl.SetWindowTextA(tmp);
+}
+
+//전송 버튼
+void CMFCserialportDlg::OnBnClickedButton2()
+{
+	CString str_num;
+	CString str_body;
+
+	sendPhone_EditCtrl.GetWindowTextA(str_num);
+	sendMessage_EditCtrl.GetWindowTextA(str_body);
+	SendMessageFunction(str_num, str_body);
+}
+
+//삭제
+void CMFCserialportDlg::OnBnClickedButton8()
+{
+	if (idx == -1) {
+		MessageBox("1.삭제를 원하는 행을 더블클릭 \n2. 비밀번호 입력 \n3.삭제 클릭");
+		return;
+	}
+	CString password;
+	password_EditCtrl.GetWindowText(password);
+	if (password.Compare(manage_password) != 0) {
+		MessageBox("올바른 비밀번호 입력 후 삭제 가능합니다.");
+		return;
+	}
+
+	// 리스트 컨트롤에서 선택한 아이템을 제거합니다.
+	CString phone; 
+	sendPhone_EditCtrl.GetWindowTextA(phone);
+
+
+	char* s_name;
+
+	CStringW strw(phone);
+	LPCWSTR ptr = strw;
+
+	int sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+	s_name = new char[sLen + 1];
+	WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_name, sLen, NULL, NULL);
+
+	char szName[100];
+	AnsiToUTF8(s_name, szName, 100);
+
+	delete[]s_name;
+
+
+	sqlite3* db;
+	int rc = sqlite3_open("test.db", &db);
+
+	if (rc != SQLITE_OK)
+	{
+		printf("Failed to open DB\n");
+		sqlite3_close(db);
+		exit(1);
+	}
+
+	char* errmsg = NULL;
+	char sql[255] = { 0 };
+	sprintf(sql, "delete from db where TEL = '%s';", szName);
+
+
+	if (SQLITE_OK != sqlite3_exec(db, sql, NULL, NULL, &errmsg))
+	{
+		MessageBox("오류발생 %s",errmsg);
+		printf("delete");
+		return;
+	}
+
+	mList.DeleteItem(idx);
+	sqlite3_close(db);
+	idx = -1;
 }

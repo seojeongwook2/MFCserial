@@ -13,8 +13,9 @@ class CMFCserialportDlg : public CDialogEx
 
 	CString manage_password = "1234";
 	CListCtrl mList;
-	CButton add_Button;
-	CEdit phone_EditCtrl, name_EditCtrl, password_EditCtrl;
+	CButton add_Button, PUMP1, PUMP2, PUMP3, STOP, RESET;
+	CEdit phone_EditCtrl, name_EditCtrl, password_EditCtrl, sendName_EditCtrl, sendPhone_EditCtrl, sendMessage_EditCtrl;
+	int idx = -1;
 // 생성입니다.
 public:
 	CMFCserialportDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
@@ -61,4 +62,12 @@ public:
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult); //색상떄매 추가해봄
 
+	afx_msg void OnDblclkList1(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnBnClickedButton6();
+	afx_msg void OnBnClickedButton4();
+	afx_msg void OnBnClickedButton5();
+	afx_msg void OnBnClickedButton7();
+	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickedButton8();
 };
