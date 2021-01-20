@@ -13,7 +13,7 @@ class CMFCserialportDlg : public CDialogEx
 {
 
 	CString manage_password = "1234";
-	CListCtrl mList;
+	CListCtrl mList, msgList;
 	CButton add_Button, PUMP1, PUMP2, PUMP3, STOP, RESET;
 	CEdit phone_EditCtrl, name_EditCtrl, password_EditCtrl, sendName_EditCtrl, sendPhone_EditCtrl, sendMessage_EditCtrl;
 	CStatic text101, text102, text103, text104, text100;
@@ -63,7 +63,6 @@ public:
 	CString m_str_comport;
 	afx_msg void OnBnClickedBtConnect();
 	afx_msg void OnCbnSelchangeComboComport();
-	CEdit m_edit_revmsg;
 	afx_msg void OnEnChangeEditRevmsg();
 	//afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnBnClickedButton1();

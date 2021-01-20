@@ -82,7 +82,7 @@ public:
 	void setContent(CString in_content) { content = in_content; }
 
 	bool operator<(CUSTOM_MESSAGE &target) {
-		return this->index < target.index;
+		return this->index > target.index;
 	}
 };
 
@@ -100,7 +100,6 @@ void CMFCserialportDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_COMPORT, m_combo_comport_list);
 	DDX_CBString(pDX, IDC_COMBO_COMPORT, m_str_comport);
-	DDX_Control(pDX, IDC_EDIT_REVMSG, m_edit_revmsg);
 }
 
 BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
@@ -111,7 +110,6 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_MESSAGE(WM_MYRECEIVE, &CMFCserialportDlg::OnReceive)
 	ON_BN_CLICKED(IDC_BT_CONNECT, &CMFCserialportDlg::OnBnClickedBtConnect)
 	ON_CBN_SELCHANGE(IDC_COMBO_COMPORT, &CMFCserialportDlg::OnCbnSelchangeComboComport)
-	ON_EN_CHANGE(IDC_EDIT_REVMSG, &CMFCserialportDlg::OnEnChangeEditRevmsg)
 	ON_BN_CLICKED(IDC_BUTTON1, &CMFCserialportDlg::OnBnClickedButton1)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CMFCserialportDlg::OnDblclkList1)
 	ON_BN_CLICKED(IDC_BUTTON3, &CMFCserialportDlg::OnBnClickedButton3)
@@ -255,7 +253,6 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	UpdateData(FALSE);
 
 	big_font.CreatePointFont(200, TEXT("굴림"));
-	GetDlgItem(IDC_EDIT_REVMSG)->SetFont(&big_font);
 
 	SetWindowText("문자 송/수신 프로그램");
 
@@ -286,7 +283,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	text102.Attach(GetDlgItem(IDC_STATIC102)->m_hWnd);
 	text103.Attach(GetDlgItem(IDC_STATIC103)->m_hWnd);
 	text104.Attach(GetDlgItem(IDC_STATIC104)->m_hWnd);
-
+	msgList.Attach(GetDlgItem(IDC_LIST_MSG)->m_hWnd);
 
 	//init list by jang
 	text100.SetFont(&static_font);
@@ -318,13 +315,20 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	mList.InsertColumn(0, tmp, LVCFMT_LEFT , width);
 	tmp = "전화번호";
 	mList.InsertColumn(1, tmp, LVCFMT_LEFT, width);
-
 	tmp = "가동여부";
 	mList.InsertColumn(2, tmp, LVCFMT_LEFT, width);
-
 	tmp = "수위위험";
 	mList.InsertColumn(3, tmp, LVCFMT_LEFT,rect.Width() - 3 * width);
 
+
+	msgList.GetClientRect(&rect);
+	tmp = "수신 번호";
+	width = rect.Width() / 3;
+	msgList.InsertColumn(0, tmp, LVCFMT_LEFT, width);
+	tmp = "내용";
+	msgList.InsertColumn(1, tmp, LVCFMT_LEFT, width);
+	tmp = "시간";
+	msgList.InsertColumn(2, tmp, LVCFMT_LEFT, rect.Width() - 2 * width);
 
 	//db create by jang
 
@@ -390,11 +394,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	}
 
 	sqlite3_finalize(stmt);
-
 	sqlite3_close(db);
-
-
-
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -461,8 +461,12 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 			save_buffer.Remove('\r');
 			save_buffer.Remove('\n');
 
+			if (save_buffer.Find("*SMSAC") != -1) {
+				buffer_complete = TRUE;
+				save_buffer = "";
+			}
+
 			if (save_buffer.Find("OK") != -1) {
-				m_edit_revmsg.SetWindowTextA(" ");
 				for (int i = 0; i < 255; i++) {
 					CString temp;
 					AfxExtractSubString(temp, save_buffer, i + 1, ':');
@@ -486,13 +490,21 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 					total_message_in_modem[i].setContent(temp_content);
 					total_message_in_modem[i].setNumber(temp_number);
 
-
 					temp += "\r\n";
-					m_edit_revmsg.ReplaceSel(temp);
-					m_edit_revmsg.LineScroll(m_edit_revmsg.GetLineCount());
 				}
 
 				std::sort(total_message_in_modem, total_message_in_modem + 255);
+				msgList.DeleteAllItems();
+
+				if (idx != -1) {
+					for (int j = 0; j < 255; j++) {
+						if (mList.GetItemText(idx, 1).Compare(total_message_in_modem[j].getNumber()) == 0) {
+							int nItem = msgList.InsertItem(0, total_message_in_modem[j].getNumber());
+							msgList.SetItemText(nItem, 1, total_message_in_modem[j].getCotent());
+							msgList.SetItemText(nItem, 2, total_message_in_modem[j].getTime());
+						}
+					}
+				}
 
 			//	total_message_in_modem[1].getNumber();
 
@@ -513,7 +525,7 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 					// 중지 : FALSE 가동 : TRUE
 
 					// 물 수위
-					for (int j = 0; j < 255; j++) {
+					for (int j = 254; j >= 0; j--) {
 						CString compare_number = total_message_in_modem[j].getNumber();
 
 						if (phone.Compare(compare_number) == 0) {
@@ -531,7 +543,7 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 					}
 
 					// 펌프 가동 상태
-					for (int j = 0; j < 255; j++) {
+					for (int j = 254; j >= 0; j--) {
 						CString compare_number = total_message_in_modem[j].getNumber();
 
 						if (phone.Compare(compare_number) == 0) {
@@ -594,11 +606,15 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 			return 0;
 		}
 
-		if (str.Find("*SMSAL") != -1) {
+		if (str.Find("*SMS") != -1) {
 			/*
 			** *SMSALERT가 들어옴. ERT가 잘려도 문제 없게 작성
 			** OK가 들어올 때까지 buffer를 열어두자
 			*/
+
+			if (str.Find("SMSMO") != -1) {
+				return 0;
+			}
 
 			buffer_complete = FALSE; 
 			save_buffer = "";
@@ -660,9 +676,11 @@ void CMFCserialportDlg::OnBnClickedBtConnect()
 			AfxMessageBox(_T("COM 포트열림"));
 			comport_state = true;
 			GetDlgItem(IDC_BT_CONNECT)->SetWindowTextA(_T("CLOSE"));
-
-			CString final_send_string = "AT*SMSMO=01224606372,01224606372,50\r\n";
-			m_comm->Send(final_send_string, final_send_string.GetLength());
+			// 
+			buffer_complete = FALSE;
+			save_buffer = "";
+			CString command_send_string = "AT*SKT*READTI=4098\r\n";
+			m_comm->Send(command_send_string, command_send_string.GetLength());
 		}
 		else {
 			AfxMessageBox(_T("ERROR!"));
@@ -862,18 +880,13 @@ void CMFCserialportDlg::OnDblclkList1(NMHDR* pNMHDR, LRESULT* pResult)
 		sendPhone_EditCtrl.SetWindowTextA(strSelectedPhone);
 		sendName_EditCtrl.SetWindowTextA(strSelectdName);
 
-		m_edit_revmsg.SetWindowTextA("");
+		msgList.DeleteAllItems();
 
-		for (int i = 254; i >= 0; i--) {
+		for (int i = 0; i < 255; i++) {
 			if (total_message_in_modem[i].getNumber().Compare(strSelectedPhone) == 0) {
-				CString display_string = "";
-				display_string += total_message_in_modem[i].getCotent();
-				display_string += "            ";
-				display_string += total_message_in_modem[i].getTime();
-				display_string += "\r\n";
-
-				m_edit_revmsg.ReplaceSel(display_string);
-				m_edit_revmsg.LineScroll(m_edit_revmsg.GetLineCount());
+				int nItem = msgList.InsertItem(0, total_message_in_modem[i].getNumber());
+				msgList.SetItemText(nItem, 1, total_message_in_modem[i].getCotent());
+				msgList.SetItemText(nItem, 2, total_message_in_modem[i].getTime());
 			}
 		}
 	}
