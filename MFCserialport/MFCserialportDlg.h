@@ -5,7 +5,8 @@
 #pragma once
 #include "afxwin.h"
 #include "Mycomm.h"
-
+#include <vector>
+#include<map>
 
 // CMFCserialportDlg 대화 상자
 class CMFCserialportDlg : public CDialogEx
@@ -15,7 +16,12 @@ class CMFCserialportDlg : public CDialogEx
 	CListCtrl mList;
 	CButton add_Button, PUMP1, PUMP2, PUMP3, STOP, RESET;
 	CEdit phone_EditCtrl, name_EditCtrl, password_EditCtrl, sendName_EditCtrl, sendPhone_EditCtrl, sendMessage_EditCtrl;
+	CStatic text101, text102, text103, text104, text100;
+	std::vector<std::pair<CString, CString>> vt;
+	std::map<char, CString> mapping;
+
 	int idx = -1;
+
 // 생성입니다.
 public:
 	CMFCserialportDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
@@ -23,6 +29,7 @@ public:
 	CMycomm* m_comm;
 	LRESULT OnThreadClosed(WPARAM length, LPARAM lpara);
 	LRESULT OnReceive(WPARAM length, LPARAM lpara);
+
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
@@ -70,4 +77,7 @@ public:
 	afx_msg void OnBnClickedButton7();
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnBnClickedButton8();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+	afx_msg void OnBnClickedButton9();
 };

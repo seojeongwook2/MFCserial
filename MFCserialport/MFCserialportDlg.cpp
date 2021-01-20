@@ -7,11 +7,11 @@
 #include "MFCserialport.h"
 #include "MFCserialportDlg.h"
 #include "afxdialogex.h"
-#include<map>
 #include<string>
 #include<algorithm>
 #include "sqlite3.h"
 #include <assert.h>
+#include "SendAllDialog.h"
 
 #pragma comment(lib, "sqlite3.lib")
 
@@ -23,8 +23,9 @@
 
 // CMFCserialportDlg 대화 상자
 
-std::map<char, CString> mapping;
 CFont big_font;
+CFont font, static_font;
+
 static HANDLE wait_handle;
 
 // SQLite는 UTF8을 사용하기 때문에 코드 변환이 필요합니다 by jang
@@ -120,6 +121,9 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON7, &CMFCserialportDlg::OnBnClickedButton7)
 	ON_BN_CLICKED(IDC_BUTTON2, &CMFCserialportDlg::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON8, &CMFCserialportDlg::OnBnClickedButton8)
+	ON_WM_CTLCOLOR()
+	ON_WM_MEASUREITEM()
+	ON_BN_CLICKED(IDC_BUTTON9, &CMFCserialportDlg::OnBnClickedButton9)
 END_MESSAGE_MAP()
 
 
@@ -128,7 +132,8 @@ END_MESSAGE_MAP()
 BOOL CMFCserialportDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
+	font.CreatePointFont(200, "Arial");
+	static_font.CreatePointFont(150, "Arial");
 	// 이 대화 상자의 아이콘을 설정합니다.  응용 프로그램의 주 창이 대화 상자가 아닐 경우에는
 	//  프레임워크가 이 작업을 자동으로 수행합니다.
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
@@ -246,7 +251,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 	comport_state = false;
 	GetDlgItem(IDC_BT_CONNECT)->SetWindowText(_T("OPEN"));
-	m_str_comport = _T("COM2");
+	m_str_comport = _T("COM3");
 	UpdateData(FALSE);
 
 	big_font.CreatePointFont(200, TEXT("굴림"));
@@ -276,15 +281,34 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	STOP.Attach(GetDlgItem(IDC_BUTTON6)->m_hWnd);
 	RESET.Attach(GetDlgItem(IDC_BUTTON7)->m_hWnd);
 	sendMessage_EditCtrl.Attach(GetDlgItem(IDC_EDIT7)->m_hWnd);
+	text100.Attach(GetDlgItem(IDC_STATIC100)->m_hWnd);
+	text101.Attach(GetDlgItem(IDC_STATIC101)->m_hWnd);
+	text102.Attach(GetDlgItem(IDC_STATIC102)->m_hWnd);
+	text103.Attach(GetDlgItem(IDC_STATIC103)->m_hWnd);
+	text104.Attach(GetDlgItem(IDC_STATIC104)->m_hWnd);
 
 
 	//init list by jang
+	text100.SetFont(&static_font);
+	text101.SetFont(&static_font);
+	text102.SetFont(&static_font);
+	text103.SetFont(&static_font);
+	text104.SetFont(&static_font);
+
+
 
 	mList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	mList.ModifyStyle(LVS_OWNERDRAWFIXED, 0, 0);
+	mList.SetFont(&font);
+
+
+
+
 
 	CRect rect;
 	//list 크기 얻어오기 by jang
 	mList.GetClientRect(&rect);
+
 
 
 	// 리스트 컨트롤에 컬럼 이름 입력 by jang
@@ -964,4 +988,60 @@ void CMFCserialportDlg::OnBnClickedButton8()
 	mList.DeleteItem(idx);
 	sqlite3_close(db);
 	idx = -1;
+}
+
+
+HBRUSH CMFCserialportDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	UINT nID = pWnd->GetDlgCtrlID();
+
+
+	switch (nID){
+	case IDC_STATIC7:
+		pDC->SetBkColor(RGB(255, 0, 0));
+		break;
+
+	case IDC_STATIC8:
+		pDC->SetBkColor(RGB(255, 0, 255));
+		break;
+
+	case IDC_STATIC9:
+		pDC->SetBkColor(RGB(0, 0, 255));
+		break;
+	}
+
+
+	return hbr;
+}
+
+
+void CMFCserialportDlg::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
+{
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+
+	if (nIDCtl == IDC_LIST1)
+	{
+		lpMeasureItemStruct->itemHeight += 40;      //  - 연산 설정하면 높이가 줄어듭니다.
+	}
+
+	CDialogEx::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
+}
+
+//일괄전송
+void CMFCserialportDlg::OnBnClickedButton9()
+{
+	SendAllDialog dlg;
+	
+	for (int i = 0; i < mList.GetItemCount(); i++) {
+		CString phone = mList.GetItemText(i, 1);
+		CString name = mList.GetItemText(i, 0);
+		vt.push_back({ name,phone });
+	}
+	dlg.recv = vt;
+	dlg.mn_comm = m_comm;
+	dlg.n_mapping = mapping;
+
+	dlg.DoModal();
 }

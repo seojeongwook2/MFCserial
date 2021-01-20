@@ -5,6 +5,7 @@
 #define IDD_MFCSERIALPORT_DIALOG        102
 #define IDR_MAINFRAME                   128
 #define IDD_DIALOG1                     130
+#define IDD_DIALOG2                     132
 #define IDC_COMBO_COMPORT               1000
 #define IDC_COMBO_BAUDRATE              1001
 #define IDC_BT_CONNECT                  1002
@@ -17,6 +18,7 @@
 #define IDC_BT_MESSAGE_SEND             1009
 #define IDC_EDIT1                       1010
 #define IDC_EDIT_REVMSG                 1010
+#define IDC_EDIT200                     1010
 #define IDC_BT_MODIFY_ACCOUNT           1011
 #define IDC_STATIC_COMPORT              1014
 #define IDC_LIST1                       1016
@@ -34,14 +36,31 @@
 #define IDC_BUTTON7                     1028
 #define IDC_EDIT7                       1029
 #define IDC_BUTTON8                     1030
+#define IDC_STATIC7                     1033
+#define IDC_STATIC8                     1034
+#define IDC_STATIC9                     1035
+#define IDC_STATIC100                   1036
+#define IDC_STATIC101                   1037
+#define IDC_STATIC102                   1038
+#define IDC_STATIC103                   1039
+#define IDC_STATIC104                   1040
+#define IDC_BUTTON9                     1041
+#define IDC_LIST1002                    1042
+#define IDC_STATIC106                   1043
+#define IDC_BUTTON200                   1044
+#define IDC_BUTTON300                   1045
+#define IDC_BUTTON301                   1046
+#define IDC_BUTTON302                   1047
+#define IDC_BUTTON303                   1048
+#define IDC_BUTTON304                   1049
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        132
+#define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1032
+#define _APS_NEXT_CONTROL_VALUE         1050
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
