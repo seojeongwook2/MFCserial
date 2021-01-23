@@ -12,11 +12,12 @@
 class CMFCserialportDlg : public CDialogEx
 {
 
-	CString manage_password = "1234";
+	CString manage_password = "eosint390*";
 	CListCtrl mList, msgList;
 	CButton add_Button, PUMP1, PUMP2, PUMP3, STOP, RESET;
 	CEdit phone_EditCtrl, name_EditCtrl, password_EditCtrl, sendName_EditCtrl, sendPhone_EditCtrl, sendMessage_EditCtrl;
-	CStatic text101, text102, text103, text104, text100;
+	CStatic text101, text102, text103, text104, text100, text600, text601, text602;
+	
 	std::vector<std::pair<CString, CString>> vt;
 	std::map<char, CString> mapping;
 

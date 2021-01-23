@@ -47,7 +47,7 @@ BOOL SendAllDialog::OnInitDialog()
 {
 
 	CDialog::OnInitDialog();
-
+	SetWindowText("명령 일괄 전송");
 
 	mList.Attach(GetDlgItem(IDC_LIST1002)->m_hWnd);
 	mList.SetFocus();
@@ -63,7 +63,7 @@ BOOL SendAllDialog::OnInitDialog()
 	// 리스트 컨트롤에 컬럼 이름 입력 by jang
 	CString tmp;
 	tmp = "이름";
-	int width = rect.Width() / 3;
+	int width = rect.Width() / 4;
 	mList.InsertColumn(0, tmp, LVCFMT_LEFT, width);
 	tmp = "전화번호";
 	mList.InsertColumn(1, tmp, LVCFMT_LEFT, width);
@@ -151,6 +151,7 @@ void SendAllDialog::OnDblclkList1002(NMHDR* pNMHDR, LRESULT* pResult)
 		idx = pNMItemActivate->iItem;
 		CString strSelectdName = mList.GetItemText(idx, 0);
 		CString strSelectedPhone = mList.GetItemText(idx, 1);
+		strSelectdName += "에 전송할 명령을 입력하세요.";
 
 		text106.SetWindowTextA(strSelectdName);
 /*

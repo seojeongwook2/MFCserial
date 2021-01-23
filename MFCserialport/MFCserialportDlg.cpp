@@ -284,6 +284,10 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	text103.Attach(GetDlgItem(IDC_STATIC103)->m_hWnd);
 	text104.Attach(GetDlgItem(IDC_STATIC104)->m_hWnd);
 	msgList.Attach(GetDlgItem(IDC_LIST_MSG)->m_hWnd);
+	text600.Attach(GetDlgItem(IDC_STATIC_600)->m_hWnd);
+	text601.Attach(GetDlgItem(IDC_STATIC_601)->m_hWnd);
+	text602.Attach(GetDlgItem(IDC_STATIC_602)->m_hWnd);
+
 
 	//init list by jang
 	text100.SetFont(&static_font);
@@ -291,6 +295,9 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	text102.SetFont(&static_font);
 	text103.SetFont(&static_font);
 	text104.SetFont(&static_font);
+	text600.SetFont(&font);
+	text601.SetFont(&font);
+	text602.SetFont(&font);
 
 
 
@@ -298,8 +305,11 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	mList.ModifyStyle(LVS_OWNERDRAWFIXED, 0, 0);
 	mList.SetFont(&font);
 
-
-
+	name_EditCtrl.SetFont(&static_font);
+	phone_EditCtrl.SetFont(&static_font);
+	password_EditCtrl.SetFont(&static_font);
+	sendName_EditCtrl.SetFont(&static_font);
+	sendPhone_EditCtrl.SetFont(&static_font);
 
 
 	CRect rect;
@@ -310,25 +320,25 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 	// 리스트 컨트롤에 컬럼 이름 입력 by jang
 	CString tmp;
-	tmp = "이름";
+	tmp = "설비위치";
 	int width = rect.Width() / 4;
-	mList.InsertColumn(0, tmp, LVCFMT_LEFT , width);
+	mList.InsertColumn(1, tmp, LVCFMT_CENTER, width);
 	tmp = "전화번호";
-	mList.InsertColumn(1, tmp, LVCFMT_LEFT, width);
+	mList.InsertColumn(2, tmp, LVCFMT_CENTER, width);
 	tmp = "가동여부";
-	mList.InsertColumn(2, tmp, LVCFMT_LEFT, width);
-	tmp = "수위위험";
-	mList.InsertColumn(3, tmp, LVCFMT_LEFT,rect.Width() - 3 * width);
+	mList.InsertColumn(3, tmp, LVCFMT_CENTER, width);
+	tmp = "수위";
+	mList.InsertColumn(4, tmp, LVCFMT_CENTER,rect.Width() - 3 * width);
 
 
 	msgList.GetClientRect(&rect);
 	tmp = "수신 번호";
 	width = rect.Width() / 3;
-	msgList.InsertColumn(0, tmp, LVCFMT_LEFT, width);
+	msgList.InsertColumn(1, tmp, LVCFMT_CENTER, width);
 	tmp = "내용";
-	msgList.InsertColumn(1, tmp, LVCFMT_LEFT, width);
+	msgList.InsertColumn(2, tmp, LVCFMT_CENTER, width);
 	tmp = "시간";
-	msgList.InsertColumn(2, tmp, LVCFMT_LEFT, rect.Width() - 2 * width);
+	msgList.InsertColumn(3, tmp, LVCFMT_CENTER, rect.Width() - 2 * width);
 
 	//db create by jang
 
@@ -486,7 +496,31 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 					AfxExtractSubString(temp_content, temp, 4, ',');
 
 					total_message_in_modem[i].setIndex(_ttoi(temp_index));
-					total_message_in_modem[i].setTime(temp_time);
+
+					CString display_time = "";
+					display_time = temp_time.Left(4);
+					display_time += "년 ";
+					temp_time = temp_time.Right(temp_time.GetLength() - 4);
+
+					display_time += temp_time.Left(2);
+					display_time += "월 ";
+					temp_time = temp_time.Right(temp_time.GetLength() - 2);
+
+					display_time += temp_time.Left(2);
+					display_time += "일 ";
+					temp_time = temp_time.Right(temp_time.GetLength() - 2);
+
+					display_time += temp_time.Left(2);
+					display_time += ":";
+					temp_time = temp_time.Right(temp_time.GetLength() - 2);
+
+					display_time += temp_time.Left(2);
+					display_time += ":";
+					temp_time = temp_time.Right(temp_time.GetLength() - 2);
+
+					display_time += temp_time.Left(2);
+
+					total_message_in_modem[i].setTime(display_time);
 					total_message_in_modem[i].setContent(temp_content);
 					total_message_in_modem[i].setNumber(temp_number);
 
@@ -581,7 +615,7 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 						}
 						else {
 							mList.SetItemText(nItem, 2, "중지");
-							mList.SetItemText(nItem, 3, "위험");
+							mList.SetItemText(nItem, 3, "저수위");
 						}
 
 					}
@@ -592,7 +626,7 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 						}
 						else {
 							mList.SetItemText(nItem, 2, "가동");
-							mList.SetItemText(nItem, 3, "위험");
+							mList.SetItemText(nItem, 3, "저수위");
 						}
 					}
 				}
@@ -837,15 +871,15 @@ void CMFCserialportDlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 			int iRow = pLVCD->nmcd.dwItemSpec; // 행을 알수있다.
 			CString isOn = mList.GetItemText(iRow, 2);
 			CString isDanger = mList.GetItemText(iRow, 3);
-			if (isOn.Compare("가동") == 0 && isDanger.Compare("위험") == 0) {
+			if (isOn.Compare("가동") == 0 && isDanger.Compare("저수위") == 0) {
 				pLVCD->clrText = RGB(255, 0, 0); // 텍스트 색 지정
 				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
 			}
-			else if (isOn.Compare("가동") == 0 && isDanger.Compare("위험") != 0) {
+			else if (isOn.Compare("가동") == 0 && isDanger.Compare("저수위") != 0) {
 				pLVCD->clrText = RGB(0, 0, 255); // 텍스트 색 지정
 				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
 			}
-			else if (isOn.Compare("가동") != 0 && isDanger.Compare("위험") == 0) {
+			else if (isOn.Compare("가동") != 0 && isDanger.Compare("저수위") == 0) {
 				pLVCD->clrText = RGB(255, 0, 255); // 텍스트 색 지정
 				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
 			}
@@ -1022,6 +1056,10 @@ HBRUSH CMFCserialportDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	case IDC_STATIC9:
 		pDC->SetBkColor(RGB(0, 0, 255));
+		break;
+		
+	case IDC_STATIC10:
+		pDC->SetBkColor(RGB(0, 0, 0));
 		break;
 	}
 
