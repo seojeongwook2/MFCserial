@@ -13,6 +13,7 @@
 #include <assert.h>
 #include "SendAllDialog.h"
 
+
 #pragma comment(lib, "sqlite3.lib")
 
 #ifdef _DEBUG
@@ -332,7 +333,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 
 	msgList.GetClientRect(&rect);
-	tmp = "수신 번호";
+	tmp = "설비위치";
 	width = rect.Width() / 3;
 	msgList.InsertColumn(1, tmp, LVCFMT_CENTER, width);
 	tmp = "내용";
@@ -533,7 +534,7 @@ LRESULT CMFCserialportDlg::OnReceive(WPARAM length, LPARAM lpara) {
 				if (idx != -1) {
 					for (int j = 0; j < 255; j++) {
 						if (mList.GetItemText(idx, 1).Compare(total_message_in_modem[j].getNumber()) == 0) {
-							int nItem = msgList.InsertItem(0, total_message_in_modem[j].getNumber());
+							int nItem = msgList.InsertItem(0, mList.GetItemText(idx,0));
 							msgList.SetItemText(nItem, 1, total_message_in_modem[j].getCotent());
 							msgList.SetItemText(nItem, 2, total_message_in_modem[j].getTime());
 						}
@@ -881,7 +882,7 @@ void CMFCserialportDlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 			}
 			else if (isOn.Compare("가동") != 0 && isDanger.Compare("저수위") == 0) {
 				pLVCD->clrText = RGB(255, 0, 255); // 텍스트 색 지정
-				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정			
 			}
 			else {
 				pLVCD->clrText = RGB(0, 0, 0); // 텍스트 색 지정
@@ -918,7 +919,7 @@ void CMFCserialportDlg::OnDblclkList1(NMHDR* pNMHDR, LRESULT* pResult)
 
 		for (int i = 0; i < 255; i++) {
 			if (total_message_in_modem[i].getNumber().Compare(strSelectedPhone) == 0) {
-				int nItem = msgList.InsertItem(0, total_message_in_modem[i].getNumber());
+				int nItem = msgList.InsertItem(0, strSelectdName);
 				msgList.SetItemText(nItem, 1, total_message_in_modem[i].getCotent());
 				msgList.SetItemText(nItem, 2, total_message_in_modem[i].getTime());
 			}
@@ -1044,7 +1045,6 @@ HBRUSH CMFCserialportDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	UINT nID = pWnd->GetDlgCtrlID();
 
-
 	switch (nID){
 	case IDC_STATIC7:
 		pDC->SetBkColor(RGB(255, 0, 0));
@@ -1062,8 +1062,6 @@ HBRUSH CMFCserialportDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		pDC->SetBkColor(RGB(0, 0, 0));
 		break;
 	}
-
-
 	return hbr;
 }
 
