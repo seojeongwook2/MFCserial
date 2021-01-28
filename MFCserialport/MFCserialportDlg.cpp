@@ -123,6 +123,8 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_WM_MEASUREITEM()
 	ON_BN_CLICKED(IDC_BUTTON9, &CMFCserialportDlg::OnBnClickedButton9)
+	ON_WM_TIMER()
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 
@@ -143,6 +145,10 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	// ShowWindow(SW_SHOWMAXIMIZED);
 	buffer_complete = TRUE;
 	save_buffer = "";
+
+	// 7950 ID - settimer 생성
+	SetTimer(7950, 1500, NULL);
+	color_flag = FALSE;
 
 	for (int i = 0; i < 277; i++) {
 		total_message_in_modem[i].setContent(_T(""));
@@ -305,6 +311,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	mList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	mList.ModifyStyle(LVS_OWNERDRAWFIXED, 0, 0);
 	mList.SetFont(&font);
+	msgList.SetFont(&static_font);
 
 	name_EditCtrl.SetFont(&static_font);
 	phone_EditCtrl.SetFont(&static_font);
@@ -334,12 +341,12 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 	msgList.GetClientRect(&rect);
 	tmp = "설비위치";
-	width = rect.Width() / 3;
-	msgList.InsertColumn(1, tmp, LVCFMT_CENTER, width);
+	width = rect.Width() / 8;
+	msgList.InsertColumn(1, tmp, LVCFMT_CENTER, width * 2);
 	tmp = "내용";
-	msgList.InsertColumn(2, tmp, LVCFMT_CENTER, width);
+	msgList.InsertColumn(2, tmp, LVCFMT_CENTER, width * 3);
 	tmp = "시간";
-	msgList.InsertColumn(3, tmp, LVCFMT_CENTER, rect.Width() - 2 * width);
+	msgList.InsertColumn(3, tmp, LVCFMT_CENTER, rect.Width() - 5 * width);
 
 	//db create by jang
 
@@ -873,21 +880,41 @@ void CMFCserialportDlg::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 			CString isOn = mList.GetItemText(iRow, 2);
 			CString isDanger = mList.GetItemText(iRow, 3);
 			if (isOn.Compare("가동") == 0 && isDanger.Compare("저수위") == 0) {
-				pLVCD->clrText = RGB(255, 0, 0); // 텍스트 색 지정
-				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+				if (color_flag == FALSE) {
+					pLVCD->clrText = RGB(255, 0, 0); // 텍스트 색 지정
+					pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+				}
+				else {
+					pLVCD->clrText = RGB(255, 255, 255); // 텍스트 색 지정
+					pLVCD->clrTextBk = RGB(255, 0, 0);
+				}
+
 			}
 			else if (isOn.Compare("가동") == 0 && isDanger.Compare("저수위") != 0) {
 				pLVCD->clrText = RGB(0, 0, 255); // 텍스트 색 지정
-				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+				if (color_flag == FALSE) {
+					pLVCD->clrText = RGB(0, 0, 255); // 텍스트 색 지정
+					pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+				}
+				else {
+					pLVCD->clrText = RGB(255, 255, 255); // 텍스트 색 지정
+					pLVCD->clrTextBk = RGB(0, 0, 255);
+				}
 			}
 			else if (isOn.Compare("가동") != 0 && isDanger.Compare("저수위") == 0) {
 				pLVCD->clrText = RGB(255, 0, 255); // 텍스트 색 지정
-				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정			
+				if (color_flag == FALSE) {
+					pLVCD->clrText = RGB(255, 0, 255); // 텍스트 색 지정
+					pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
+				}
+				else {
+					pLVCD->clrText = RGB(255, 255, 255); // 텍스트 색 지정
+					pLVCD->clrTextBk = RGB(255, 0, 255);
+				}
 			}
 			else {
 				pLVCD->clrText = RGB(0, 0, 0); // 텍스트 색 지정
-				pLVCD->clrTextBk = RGB(255, 255, 255); // 텍스트 배경색 지정
-
+				pLVCD->clrTextBk = RGB(255, 255, 255);
 			}
 			*pResult = CDRF_DODEFAULT;
 
@@ -1093,4 +1120,43 @@ void CMFCserialportDlg::OnBnClickedButton9()
 	dlg.n_mapping = mapping;
 
 	dlg.DoModal();
+}
+
+void CMFCserialportDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	switch (nIDEvent) 
+	{
+		case 7950:
+			if (color_flag == FALSE) {
+				color_flag = TRUE;
+			}
+			else {
+				color_flag = FALSE;
+			}
+
+			for (int i = 0; i < mList.GetItemCount(); i++) {
+				CString temp_name = mList.GetItemText(i, 0);
+				CString temp_number = mList.GetItemText(i, 1);
+				CString temp_pump = mList.GetItemText(i, 2);
+				CString temp_level = mList.GetItemText(i, 3);
+
+				mList.DeleteItem(i);
+				int nItem = mList.InsertItem(i, temp_name);
+				mList.SetItemText(i, 1, temp_number);
+				mList.SetItemText(i, 2, temp_pump);
+				mList.SetItemText(i, 3, temp_level);
+			}
+
+			break;
+	}
+	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+void CMFCserialportDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+	KillTimer(7950);
+	// TODO: 여기에 메시지 처리기 코드를 추가합니다.
 }

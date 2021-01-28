@@ -22,6 +22,7 @@ class CMFCserialportDlg : public CDialogEx
 	std::map<char, CString> mapping;
 
 	int idx = -1;
+	BOOL color_flag;
 
 // 생성입니다.
 public:
@@ -80,4 +81,6 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
 	afx_msg void OnBnClickedButton9();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnDestroy();
 };
