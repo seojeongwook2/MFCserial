@@ -9,6 +9,7 @@
 
 // SendAllDialog 대화 상자
 
+CFont static_font2;
 IMPLEMENT_DYNAMIC(SendAllDialog, CDialogEx)
 
 SendAllDialog::SendAllDialog(CWnd* pParent /*=nullptr*/)
@@ -37,6 +38,7 @@ BEGIN_MESSAGE_MAP(SendAllDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON303, &SendAllDialog::OnBnClickedButton303)
 	ON_BN_CLICKED(IDC_BUTTON304, &SendAllDialog::OnBnClickedButton304)
 	ON_BN_CLICKED(IDC_BUTTON200, &SendAllDialog::OnBnClickedButton200)
+	ON_BN_CLICKED(IDC_BUTTON305, &SendAllDialog::OnBnClickedButton305)
 END_MESSAGE_MAP()
 
 
@@ -49,6 +51,7 @@ BOOL SendAllDialog::OnInitDialog()
 	CDialog::OnInitDialog();
 	SetWindowText("명령 일괄 전송");
 
+	static_font2.CreatePointFont(150, "Arial");
 	mList.Attach(GetDlgItem(IDC_LIST1002)->m_hWnd);
 	mList.SetFocus();
 	mList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
@@ -57,18 +60,42 @@ BOOL SendAllDialog::OnInitDialog()
 	button200.Attach(GetDlgItem(IDC_BUTTON200)->m_hWnd);
 	edit200.Attach(GetDlgItem(IDC_EDIT200)->m_hWnd);
 
+	button300.Attach(GetDlgItem(IDC_BUTTON300)->m_hWnd);
+	button301.Attach(GetDlgItem(IDC_BUTTON301)->m_hWnd);
+	button302.Attach(GetDlgItem(IDC_BUTTON302)->m_hWnd);
+	button303.Attach(GetDlgItem(IDC_BUTTON303)->m_hWnd);
+	button304.Attach(GetDlgItem(IDC_BUTTON304)->m_hWnd);
+	button305.Attach(GetDlgItem(IDC_BUTTON305)->m_hWnd);
+
+	button_ok.Attach(GetDlgItem(IDOK)->m_hWnd);
+	button_cancel.Attach(GetDlgItem(IDCANCEL)->m_hWnd);
+
+	text106.SetFont(&static_font2);
+	mList.SetFont(&static_font2);
+	edit200.SetFont(&static_font2);
+	button200.SetFont(&static_font2);
+	button300.SetFont(&static_font2);
+	button301.SetFont(&static_font2);
+	button302.SetFont(&static_font2);
+	button303.SetFont(&static_font2);
+	button304.SetFont(&static_font2);
+	button305.SetFont(&static_font2);
+
+	button_ok.SetFont(&static_font2);
+	button_cancel.SetFont(&static_font2);
+
 	CRect rect;
 	//list 크기 얻어오기 by jang
 	mList.GetClientRect(&rect);
 	// 리스트 컨트롤에 컬럼 이름 입력 by jang
 	CString tmp;
-	tmp = "이름";
+	tmp = "설비이름(위치)";
 	int width = rect.Width() / 4;
-	mList.InsertColumn(0, tmp, LVCFMT_LEFT, width);
-	tmp = "전화번호";
-	mList.InsertColumn(1, tmp, LVCFMT_LEFT, width);
-	tmp = "메시지 내용";
-	mList.InsertColumn(2, tmp, LVCFMT_LEFT, rect.Width() - 2 * width);
+	mList.InsertColumn(1, tmp, LVCFMT_CENTER, width);
+	tmp = "전 화 번 호";
+	mList.InsertColumn(2, tmp, LVCFMT_CENTER, width);
+	tmp = "명   령   어";
+	mList.InsertColumn(3, tmp, LVCFMT_CENTER, rect.Width() - 2 * width);
 
 	for (int i = 0; i < recv.size(); i++) {
 
@@ -95,7 +122,7 @@ void SendAllDialog::SendMessageFunction(CString target_number, CString body) {
 
 	CString final_send_string = "AT*SMSMO=";
 	final_send_string += target_number;
-	final_send_string += ",01224606372,";
+	final_send_string += ",01228388505,";
 	final_send_string += encode_msg;
 	final_send_string += "\r\n";
 
@@ -226,4 +253,10 @@ void SendAllDialog::OnBnClickedButton200()
 	edit200.GetWindowTextA(str);
 	mList.SetItemText(idx, 2, str);
 	idx = -1;
+}
+
+
+void SendAllDialog::OnBnClickedButton305()
+{
+	edit200.SetWindowTextA("PUMP4");
 }

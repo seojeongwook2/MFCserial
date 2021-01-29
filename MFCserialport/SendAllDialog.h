@@ -14,7 +14,7 @@ public:
 	std::vector<std::pair<CString, CString>> recv;
 	CListCtrl mList;
 	CStatic text106;
-	CButton button200;
+	CButton button200, button300, button301, button302, button303, button304, button_ok, button_cancel, button305;
 	CEdit edit200;
 	int idx = -1;
 	CMycomm* mn_comm;
@@ -48,4 +48,5 @@ public:
 	afx_msg void OnBnClickedButton303();
 	afx_msg void OnBnClickedButton304();
 	afx_msg void OnBnClickedButton200();
+	afx_msg void OnBnClickedButton305();
 };

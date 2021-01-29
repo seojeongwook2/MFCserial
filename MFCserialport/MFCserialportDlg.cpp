@@ -125,6 +125,7 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON9, &CMFCserialportDlg::OnBnClickedButton9)
 	ON_WM_TIMER()
 	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_BUTTON10, &CMFCserialportDlg::OnBnClickedButton10)
 END_MESSAGE_MAP()
 
 
@@ -279,9 +280,13 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	password_EditCtrl.Attach(GetDlgItem(IDC_EDIT4)->m_hWnd);
 	sendName_EditCtrl.Attach(GetDlgItem(IDC_EDIT5)->m_hWnd);
 	sendPhone_EditCtrl.Attach(GetDlgItem(IDC_EDIT6)->m_hWnd);
+	delete_button.Attach(GetDlgItem(IDC_BUTTON8)->m_hWnd);
+	button08.Attach(GetDlgItem(IDC_BUTTON2)->m_hWnd);
+
 	PUMP1.Attach(GetDlgItem(IDC_BUTTON3)->m_hWnd);
 	PUMP2.Attach(GetDlgItem(IDC_BUTTON4)->m_hWnd);
 	PUMP3.Attach(GetDlgItem(IDC_BUTTON5)->m_hWnd);
+	PUMP4.Attach(GetDlgItem(IDC_BUTTON10)->m_hWnd);
 	STOP.Attach(GetDlgItem(IDC_BUTTON6)->m_hWnd);
 	RESET.Attach(GetDlgItem(IDC_BUTTON7)->m_hWnd);
 	sendMessage_EditCtrl.Attach(GetDlgItem(IDC_EDIT7)->m_hWnd);
@@ -294,7 +299,8 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	text600.Attach(GetDlgItem(IDC_STATIC_600)->m_hWnd);
 	text601.Attach(GetDlgItem(IDC_STATIC_601)->m_hWnd);
 	text602.Attach(GetDlgItem(IDC_STATIC_602)->m_hWnd);
-
+	button09.Attach(GetDlgItem(IDC_BUTTON9)->m_hWnd);
+	button_connect.Attach(GetDlgItem(IDC_BT_CONNECT)->m_hWnd);
 
 	//init list by jang
 	text100.SetFont(&static_font);
@@ -305,8 +311,18 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	text600.SetFont(&font);
 	text601.SetFont(&font);
 	text602.SetFont(&font);
-
-
+	sendMessage_EditCtrl.SetFont(&static_font);
+	add_Button.SetFont(&static_font);
+	PUMP1.SetFont(&static_font);
+	PUMP2.SetFont(&static_font);
+	PUMP3.SetFont(&static_font);
+	PUMP4.SetFont(&static_font);
+	STOP.SetFont(&static_font);
+	RESET.SetFont(&static_font);
+	delete_button.SetFont(&static_font);
+	button08.SetFont(&static_font);
+	button09.SetFont(&static_font);
+	button_connect.SetFont(&static_font);
 
 	mList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	mList.ModifyStyle(LVS_OWNERDRAWFIXED, 0, 0);
@@ -328,7 +344,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 	// 리스트 컨트롤에 컬럼 이름 입력 by jang
 	CString tmp;
-	tmp = "설비위치";
+	tmp = "설비이름(위치)";
 	int width = rect.Width() / 4;
 	mList.InsertColumn(1, tmp, LVCFMT_CENTER, width);
 	tmp = "전화번호";
@@ -340,7 +356,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 
 
 	msgList.GetClientRect(&rect);
-	tmp = "설비위치";
+	tmp = "설비이름(위치)";
 	width = rect.Width() / 8;
 	msgList.InsertColumn(1, tmp, LVCFMT_CENTER, width * 2);
 	tmp = "내용";
@@ -713,6 +729,8 @@ void CMFCserialportDlg::OnBnClickedBtConnect()
 		}
 	}
 	else {
+
+
 		m_comm = new CMycomm(_T("\\\\.\\") + m_str_comport, _T("115200"), _T("None"), _T("8 Bit"), _T("1 Bit"));
 		if (m_comm->Create(GetSafeHwnd()) != 0) {
 			AfxMessageBox(_T("COM 포트열림"));
@@ -758,7 +776,7 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 
 		CString final_send_string = "AT*SMSMO=";
 		final_send_string += target_number;
-		final_send_string += ",01224606372,";
+		final_send_string += ",01228388505,";
 		final_send_string += encode_msg;
 		final_send_string += "\r\n";
 		m_comm->Send(final_send_string, final_send_string.GetLength());
@@ -1110,6 +1128,7 @@ void CMFCserialportDlg::OnBnClickedButton9()
 {
 	SendAllDialog dlg;
 	
+	vt.clear();
 	for (int i = 0; i < mList.GetItemCount(); i++) {
 		CString phone = mList.GetItemText(i, 1);
 		CString name = mList.GetItemText(i, 0);
@@ -1159,4 +1178,10 @@ void CMFCserialportDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 	KillTimer(7950);
 	// TODO: 여기에 메시지 처리기 코드를 추가합니다.
+}
+
+void CMFCserialportDlg::OnBnClickedButton10()
+{
+	CString tmp = "PUMP4";
+	sendMessage_EditCtrl.SetWindowTextA(tmp);
 }
