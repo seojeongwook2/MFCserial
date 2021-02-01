@@ -7,6 +7,10 @@
 #include "afxdialogex.h"
 #include<map>
 
+
+#include "sqlite3.h"
+#pragma comment(lib, "sqlite3.lib")
+
 // SendAllDialog 대화 상자
 
 CFont static_font2;
@@ -43,6 +47,33 @@ END_MESSAGE_MAP()
 
 
 // SendAllDialog 메시지 처리기
+
+int AnsiToUTF888(char* szSrc, char* strDest, int destSize)
+{
+	WCHAR 	szUnicode[255];
+	char 	szUTF8code[255];
+
+	int nUnicodeSize = MultiByteToWideChar(CP_ACP, 0, szSrc, (int)strlen(szSrc), szUnicode, sizeof(szUnicode));
+	int nUTF8codeSize = WideCharToMultiByte(CP_UTF8, 0, szUnicode, nUnicodeSize, szUTF8code, sizeof(szUTF8code), NULL, NULL);
+	assert(destSize > nUTF8codeSize);
+	memcpy(strDest, szUTF8code, nUTF8codeSize);
+	strDest[nUTF8codeSize] = 0;
+	return nUTF8codeSize;
+}
+
+int UTF8ToAnsi88(char* szSrc, char* strDest, int destSize)
+{
+	WCHAR 	szUnicode[255];
+	char 	szAnsi[255];
+
+	int nSize = MultiByteToWideChar(CP_UTF8, 0, szSrc, -1, 0, 0);
+	int nUnicodeSize = MultiByteToWideChar(CP_UTF8, 0, szSrc, -1, szUnicode, nSize);
+	int nAnsiSize = WideCharToMultiByte(CP_ACP, 0, szUnicode, nUnicodeSize, szAnsi, sizeof(szAnsi), NULL, NULL);
+	assert(destSize > nAnsiSize);
+	memcpy(strDest, szAnsi, nAnsiSize);
+	strDest[nAnsiSize] = 0;
+	return nAnsiSize;
+}
 
 
 BOOL SendAllDialog::OnInitDialog()
@@ -83,6 +114,8 @@ BOOL SendAllDialog::OnInitDialog()
 
 	button_ok.SetFont(&static_font2);
 	button_cancel.SetFont(&static_font2);
+
+
 
 	CRect rect;
 	//list 크기 얻어오기 by jang
@@ -127,6 +160,110 @@ void SendAllDialog::SendMessageFunction(CString target_number, CString body) {
 	final_send_string += "\r\n";
 
 	mn_comm->Send(final_send_string, final_send_string.GetLength());
+
+
+
+	sqlite3* db;
+	sqlite3_stmt* stmt;
+	char* errmsg = NULL;
+
+
+	int rc = sqlite3_open("history.db", &db);
+
+	if (rc != SQLITE_OK)
+	{
+		printf("Failed to open DB\n");
+		sqlite3_close(db);
+		exit(1);
+	}
+
+
+	char* sql;
+	sql = "CREATE TABLE IF NOT EXISTS DB("
+		"ID INTEGER PRIMARY        KEY     AUTOINCREMENT,"
+		"NUMBER          TEXT     NOT NULL,"
+		"TIME           TEXT     NOT NULL,"
+		"CONTENT		TEXT	NOT NULL);";
+
+	rc = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
+
+	if (rc != SQLITE_OK)
+	{
+		printf("create table");
+		sqlite3_free(errmsg);
+		sqlite3_close(db);
+		exit(1);
+	}
+
+
+	char* s_number;
+
+	CStringW strw(target_number);
+	LPCWSTR ptr = strw;
+
+	int sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+	s_number = new char[sLen + 1];
+	WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_number, sLen, NULL, NULL);
+
+	char szNumber[100];
+	AnsiToUTF888(s_number, szNumber, 100);
+
+	delete[]s_number;
+
+
+
+
+
+
+
+
+	char* s_time;
+	CTime t = CTime::GetCurrentTime();
+	CString s = t.Format("%Y년 %m월 %d일 %H:%M:%S");
+
+
+	CStringW strw1(s);
+	ptr = strw1;
+
+	sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+	s_time = new char[sLen + 1];
+	WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_time, sLen, NULL, NULL);
+
+	char szTime[100];
+	AnsiToUTF888(s_time, szTime, 100);
+
+	delete[]s_time;
+
+
+
+
+
+	char* s_content;
+	CStringW strw2(body);
+	ptr = strw2;
+	sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+	s_content = new char[sLen + 1];
+	WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_content, sLen, NULL, NULL);
+
+	char szContent[100];
+	AnsiToUTF888(s_content, szContent, 100);
+
+	delete[]s_content;
+
+
+
+
+	char sqll[255] = { 0 };
+	sprintf(sqll, "insert into db(NUMBER, TIME,CONTENT) values('%s','%s','%s');", szNumber, szTime, szContent);
+
+	if (SQLITE_OK != sqlite3_exec(db, sqll, NULL, NULL, &errmsg))
+	{
+		printf("insert");
+	}
+
+	sqlite3_close(db);
+
+
 }
 
 //보내기

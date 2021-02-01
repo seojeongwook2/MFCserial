@@ -14,7 +14,7 @@ class CMFCserialportDlg : public CDialogEx
 
 	CString manage_password = "eosint390*";
 	CListCtrl mList, msgList;
-	CButton add_Button, PUMP1, PUMP2, PUMP3, STOP, RESET, delete_button, button08, button09, button_connect, PUMP4;
+	CButton add_Button, PUMP1, PUMP2, PUMP3, STOP, RESET, delete_button, button08, button09, button_connect, PUMP4, button_history;
 	CEdit phone_EditCtrl, name_EditCtrl, password_EditCtrl, sendName_EditCtrl, sendPhone_EditCtrl, sendMessage_EditCtrl;
 	CStatic text101, text102, text103, text104, text100, text600, text601, text602;
 	
@@ -53,6 +53,8 @@ protected:
 
 	// 생성된 메시지 맵 함수
 	virtual BOOL OnInitDialog();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 
@@ -84,4 +86,5 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButton10();
+	afx_msg void OnBnClickedButtonHistory();
 };

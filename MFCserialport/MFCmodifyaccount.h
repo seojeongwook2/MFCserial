@@ -6,6 +6,8 @@
 class MFCmodifyaccount : public CDialogEx
 {
 	DECLARE_DYNAMIC(MFCmodifyaccount)
+	CListCtrl myList;
+
 
 public:
 	MFCmodifyaccount(CWnd* pParent = nullptr);   // 표준 생성자입니다.

@@ -13,7 +13,6 @@
 #include <assert.h>
 #include "SendAllDialog.h"
 
-
 #pragma comment(lib, "sqlite3.lib")
 
 #ifdef _DEBUG
@@ -126,6 +125,7 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_WM_TIMER()
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON10, &CMFCserialportDlg::OnBnClickedButton10)
+	ON_BN_CLICKED(IDC_BUTTON_HISTORY, &CMFCserialportDlg::OnBnClickedButtonHistory)
 END_MESSAGE_MAP()
 
 
@@ -301,6 +301,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	text602.Attach(GetDlgItem(IDC_STATIC_602)->m_hWnd);
 	button09.Attach(GetDlgItem(IDC_BUTTON9)->m_hWnd);
 	button_connect.Attach(GetDlgItem(IDC_BT_CONNECT)->m_hWnd);
+	button_history.Attach(GetDlgItem(IDC_BUTTON_HISTORY)->m_hWnd);
 
 	//init list by jang
 	text100.SetFont(&static_font);
@@ -334,6 +335,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	password_EditCtrl.SetFont(&static_font);
 	sendName_EditCtrl.SetFont(&static_font);
 	sendPhone_EditCtrl.SetFont(&static_font);
+	button_history.SetFont(&static_font);
 
 
 	CRect rect;
@@ -780,6 +782,112 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 		final_send_string += encode_msg;
 		final_send_string += "\r\n";
 		m_comm->Send(final_send_string, final_send_string.GetLength());
+
+
+		//------
+
+
+		sqlite3* db;
+		sqlite3_stmt* stmt;
+		char* errmsg = NULL;
+
+
+		int rc = sqlite3_open("history.db", &db);
+
+		if (rc != SQLITE_OK)
+		{
+			printf("Failed to open DB\n");
+			sqlite3_close(db);
+			exit(1);
+		}
+
+
+		char* sql;
+		sql = "CREATE TABLE IF NOT EXISTS DB("
+			"ID INTEGER PRIMARY        KEY     AUTOINCREMENT,"
+			"NUMBER          TEXT     NOT NULL,"
+			"TIME           TEXT     NOT NULL,"
+			"CONTENT		TEXT	NOT NULL);";
+
+		rc = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
+
+		if (rc != SQLITE_OK)
+		{
+			printf("create table");
+			sqlite3_free(errmsg);
+			sqlite3_close(db);
+			exit(1);
+		}
+
+
+		char* s_number;
+
+		CStringW strw(target_number);
+		LPCWSTR ptr = strw;
+
+		int sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+		s_number = new char[sLen + 1];
+		WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_number, sLen, NULL, NULL);
+
+		char szNumber[100];
+		AnsiToUTF8(s_number, szNumber, 100);
+
+		delete[]s_number;
+
+
+
+
+		CTime t = CTime::GetCurrentTime();
+		CString s = t.Format("%Y년 %m월 %d일 %H:%M:%S");
+
+
+
+
+
+		char* s_time;
+
+		CStringW strw1(s);
+		 ptr = strw1;
+
+		 sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+		s_time = new char[sLen + 1];
+		WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_time, sLen, NULL, NULL);
+
+		char szTime[100];
+		AnsiToUTF8(s_time, szTime, 100);
+
+		delete[]s_time;
+
+
+
+
+
+		char* s_content;
+		CStringW strw2(body);
+		ptr = strw2;
+		sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+		s_content = new char[sLen + 1];
+		WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_content, sLen, NULL, NULL);
+
+		char szContent[100];
+		AnsiToUTF8(s_content, szContent, 100);
+
+		delete[]s_content;
+
+
+
+		
+		char sqll[255] = { 0 };
+		sprintf(sqll, "insert into db(NUMBER, TIME,CONTENT) values('%s','%s','%s');", szNumber, szTime,szContent);
+
+		if (SQLITE_OK != sqlite3_exec(db, sqll, NULL, NULL, &errmsg))
+		{
+			printf("insert");
+		}
+
+		sqlite3_close(db);
+
+
 	}
 	else {
 
@@ -1020,6 +1128,7 @@ void CMFCserialportDlg::OnBnClickedButton2()
 	sendPhone_EditCtrl.GetWindowTextA(str_num);
 	sendMessage_EditCtrl.GetWindowTextA(str_body);
 	SendMessageFunction(str_num, str_body);
+
 }
 
 //삭제
@@ -1184,4 +1293,34 @@ void CMFCserialportDlg::OnBnClickedButton10()
 {
 	CString tmp = "PUMP4";
 	sendMessage_EditCtrl.SetWindowTextA(tmp);
+}
+
+
+void CMFCserialportDlg::OnBnClickedButtonHistory()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	MFCmodifyaccount dlg;
+	dlg.DoModal();
+
+
+}
+
+
+BOOL CMFCserialportDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN) //키가 눌렸을 경우
+	{
+		switch (pMsg->wParam)
+		{
+		case VK_RETURN:
+			return TRUE;
+		case VK_ESCAPE:
+			return TRUE;
+
+		default:
+			break;
+		}
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
 }
