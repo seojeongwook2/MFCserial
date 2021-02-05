@@ -126,6 +126,7 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON10, &CMFCserialportDlg::OnBnClickedButton10)
 	ON_BN_CLICKED(IDC_BUTTON_HISTORY, &CMFCserialportDlg::OnBnClickedButtonHistory)
+	ON_BN_CLICKED(IDC_BUTTON11, &CMFCserialportDlg::OnBnClickedButton11)
 END_MESSAGE_MAP()
 
 
@@ -805,6 +806,7 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 		char* sql;
 		sql = "CREATE TABLE IF NOT EXISTS DB("
 			"ID INTEGER PRIMARY        KEY     AUTOINCREMENT,"
+			"NAME      TEXT     NOT NULL,"
 			"NUMBER          TEXT     NOT NULL,"
 			"TIME           TEXT     NOT NULL,"
 			"CONTENT		TEXT	NOT NULL);";
@@ -819,13 +821,35 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 			exit(1);
 		}
 
+		CString tt_name= "";
+		for (int i = 0; i < mList.GetItemCount(); i++) {
+			CString phone = mList.GetItemText(i, 1);
+			CString name = mList.GetItemText(i, 0);
+
+			if (phone.Compare(target_number) == 0) {
+				tt_name = name;
+				break;
+			}
+		}
+
+		char* s_name;
+		CStringW strw4(tt_name);
+		LPCWSTR ptr = strw4;
+		int sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+		s_name = new char[sLen + 1];
+		WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_name, sLen, NULL, NULL);
+
+		char szName[100];
+		AnsiToUTF8(s_name, szName, 100);
+
+		delete[]s_name;
+
 
 		char* s_number;
-
 		CStringW strw(target_number);
-		LPCWSTR ptr = strw;
+		ptr = strw;
 
-		int sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
+		sLen = WideCharToMultiByte(CP_ACP, 0, ptr, -1, NULL, 0, NULL, NULL);
 		s_number = new char[sLen + 1];
 		WideCharToMultiByte(CP_ACP, 0, ptr, -1, s_number, sLen, NULL, NULL);
 
@@ -834,15 +858,8 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 
 		delete[]s_number;
 
-
-
-
 		CTime t = CTime::GetCurrentTime();
 		CString s = t.Format("%Y년 %m월 %d일 %H:%M:%S");
-
-
-
-
 
 		char* s_time;
 
@@ -878,7 +895,7 @@ void CMFCserialportDlg::SendMessageFunction(CString target_number, CString body)
 
 		
 		char sqll[255] = { 0 };
-		sprintf(sqll, "insert into db(NUMBER, TIME,CONTENT) values('%s','%s','%s');", szNumber, szTime,szContent);
+		sprintf(sqll, "insert into db(NAME, NUMBER, TIME,CONTENT) values('%s','%s','%s','%s');",szName, szNumber, szTime,szContent);
 
 		if (SQLITE_OK != sqlite3_exec(db, sqll, NULL, NULL, &errmsg))
 		{
@@ -1323,4 +1340,11 @@ BOOL CMFCserialportDlg::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+
+void CMFCserialportDlg::OnBnClickedButton11()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+
 }

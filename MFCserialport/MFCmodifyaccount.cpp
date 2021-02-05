@@ -56,28 +56,29 @@ MFCmodifyaccount::MFCmodifyaccount(CWnd* pParent /*=nullptr*/)
 
 BOOL MFCmodifyaccount::OnInitDialog() {
 	CDialog::OnInitDialog();
+	SetWindowText("명령 전송 내역 조회");
 	static_font3.CreatePointFont(150, "Arial");
 
 
 	myList.Attach(GetDlgItem(IDC_LIST_HISTORY)->m_hWnd);
 	myList.SetFont(&static_font3);
 
-
 	CRect rect;
 	//list 크기 얻어오기 by jang
 	myList.GetClientRect(&rect);
 
 
-
 	// 리스트 컨트롤에 컬럼 이름 입력 by jang
 	CString tmp;
-	tmp = "수신번호";
 	int width = rect.Width() / 4;
+	tmp = "설비이름(위치)";
 	myList.InsertColumn(1, tmp, LVCFMT_CENTER, width);
-	tmp = "시간";
+	tmp = "수신번호";
 	myList.InsertColumn(2, tmp, LVCFMT_CENTER, width);
+	tmp = "시간";
+	myList.InsertColumn(3, tmp, LVCFMT_CENTER, width);
 	tmp = "내용";
-	myList.InsertColumn(3, tmp, LVCFMT_CENTER, rect.Width() - 2 * width);
+	myList.InsertColumn(4, tmp, LVCFMT_CENTER, rect.Width() - 3 * width);
 	
 
 
@@ -98,6 +99,7 @@ BOOL MFCmodifyaccount::OnInitDialog() {
 	char* sql;
 	sql = "CREATE TABLE IF NOT EXISTS DB("
 		"ID INTEGER PRIMARY        KEY     AUTOINCREMENT,"
+		"NAME          TEXT     NOT NULL,"
 		"NUMBER          TEXT     NOT NULL,"
 		"TIME           TEXT     NOT NULL,"
 		"CONTENT		TEXT	NOT NULL);";
@@ -112,7 +114,6 @@ BOOL MFCmodifyaccount::OnInitDialog() {
 		exit(1);
 	}
 
-
 	// 테이블을 읽어와 리스트 컨트롤에 보여주기
 	sqlite3_prepare_v2(db, "select * from db", -1, &stmt, NULL);
 
@@ -120,23 +121,23 @@ BOOL MFCmodifyaccount::OnInitDialog() {
 		int i;
 		int num_cols = sqlite3_column_count(stmt);
 
-
 		char szAnsi[300];
 		UTF8ToAnsi8((char*)sqlite3_column_text(stmt, 1), szAnsi, 300);
-		CString NUMBER(szAnsi);
+		CString NAME(szAnsi);
 
 		UTF8ToAnsi8((char*)sqlite3_column_text(stmt, 2), szAnsi, 300);
-		CString TIME(szAnsi);
+		CString NUMBER(szAnsi);
 
-		
 		UTF8ToAnsi8((char*)sqlite3_column_text(stmt, 3), szAnsi, 300);
+		CString TIME(szAnsi);
+		
+		UTF8ToAnsi8((char*)sqlite3_column_text(stmt, 4), szAnsi, 300);
 		CString CONTENT(szAnsi);
 
-	
-
-		int nItem = myList.InsertItem(0, NUMBER);
-		myList.SetItemText(nItem, 1, TIME);
-		myList.SetItemText(nItem, 2, CONTENT);
+		int nItem = myList.InsertItem(0, NAME);
+		myList.SetItemText(nItem, 1, NUMBER);
+		myList.SetItemText(nItem, 2, TIME);
+		myList.SetItemText(nItem, 3, CONTENT);
 	}
 
 	sqlite3_finalize(stmt);
