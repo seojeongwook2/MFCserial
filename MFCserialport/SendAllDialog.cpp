@@ -6,6 +6,7 @@
 #include "SendAllDialog.h"
 #include "afxdialogex.h"
 #include<map>
+#include <assert.h>
 
 
 #include "sqlite3.h"

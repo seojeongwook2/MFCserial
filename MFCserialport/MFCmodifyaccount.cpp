@@ -5,6 +5,7 @@
 #include "MFCserialport.h"
 #include "MFCmodifyaccount.h"
 #include "afxdialogex.h"
+#include <assert.h>
 
 #include "sqlite3.h"
 #pragma comment(lib, "sqlite3.lib")

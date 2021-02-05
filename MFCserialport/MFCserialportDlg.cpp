@@ -12,6 +12,7 @@
 #include "sqlite3.h"
 #include <assert.h>
 #include "SendAllDialog.h"
+#include "MFCguide.h"
 
 #pragma comment(lib, "sqlite3.lib")
 
@@ -126,7 +127,7 @@ BEGIN_MESSAGE_MAP(CMFCserialportDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON10, &CMFCserialportDlg::OnBnClickedButton10)
 	ON_BN_CLICKED(IDC_BUTTON_HISTORY, &CMFCserialportDlg::OnBnClickedButtonHistory)
-	ON_BN_CLICKED(IDC_BUTTON11, &CMFCserialportDlg::OnBnClickedButton11)
+	ON_BN_CLICKED(IDC_BUTTON1111, &CMFCserialportDlg::OnBnClickedButton1111)
 END_MESSAGE_MAP()
 
 
@@ -303,6 +304,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	button09.Attach(GetDlgItem(IDC_BUTTON9)->m_hWnd);
 	button_connect.Attach(GetDlgItem(IDC_BT_CONNECT)->m_hWnd);
 	button_history.Attach(GetDlgItem(IDC_BUTTON_HISTORY)->m_hWnd);
+	button1111.Attach(GetDlgItem(IDC_BUTTON1111)->m_hWnd);
 
 	//init list by jang
 	text100.SetFont(&static_font);
@@ -325,6 +327,7 @@ BOOL CMFCserialportDlg::OnInitDialog()
 	button08.SetFont(&static_font);
 	button09.SetFont(&static_font);
 	button_connect.SetFont(&static_font);
+	button1111.SetFont(&static_font);
 
 	mList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	mList.ModifyStyle(LVS_OWNERDRAWFIXED, 0, 0);
@@ -1343,8 +1346,11 @@ BOOL CMFCserialportDlg::PreTranslateMessage(MSG* pMsg)
 }
 
 
-void CMFCserialportDlg::OnBnClickedButton11()
+void CMFCserialportDlg::OnBnClickedButton1111()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+
+	MFCguide dlg;
+	dlg.DoModal();
 
 }

@@ -188,6 +188,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="MFCguide.h" />
     <ClInclude Include="MFCmodifyaccount.h" />
     <ClInclude Include="MFCserialport.h" />
     <ClInclude Include="MFCserialportDlg.h" />
@@ -198,6 +199,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MFCguide.cpp" />
     <ClCompile Include="MFCmodifyaccount.cpp" />
     <ClCompile Include="MFCserialport.cpp" />
     <ClCompile Include="MFCserialportDlg.cpp" />
